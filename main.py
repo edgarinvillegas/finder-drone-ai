@@ -21,8 +21,8 @@ args = vars(ap.parse_args())
 vIn = VideoInput("videos/dog-kid.mp4").start()  # File
 
 ## --- MODEL SELECTION ---
-model = YoloDetectionModel(args["confidence"], args["threshold"])	# Yolo
-# model = SsdDetectionModel(args["confidence"])		# SSD
+# model = YoloDetectionModel(args["confidence"], args["threshold"])	# Yolo
+model = SsdDetectionModel(args["confidence"])		# SSD
 
 ## --- VIDEO OUTPUT SELECTION ---
 vOut = WindowVideoOutput()			     # Show results on window
