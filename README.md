@@ -1,14 +1,19 @@
 # video-detection-base
 
+0) If you want to use yolo (very likely), please download the model from here:
+https://s3-us-west-2.amazonaws.com/static.pyimagesearch.com/opencv-yolo/yolo-object-detection.zip?__s=pyri6sq6kf2bmdenxa8k
+copy the entire yolo-coco folder to "/models" folder, so that you have /models/yolo-coco/yolov3.weights
+
 1) Play with the input-model-output combination on main.py (around lines 18-28)
 
-2) Run the code
+3) Run the code
 ```
     python main.py
 ```  
 
+4) Repeat step #1 :) 
 
-### Requirements
+### Package requirements
 - opencv
 - imutils
 
