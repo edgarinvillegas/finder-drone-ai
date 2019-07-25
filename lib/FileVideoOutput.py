@@ -1,14 +1,15 @@
+#from abc import ABC
 import cv2
+#import BaseVideoOutput
+#from .BaseVideoOutput import BaseVideoOutput
+from . import BaseVideoOutput
 
-class VideoOutput:
+class FileVideoOutput(BaseVideoOutput):
     def __init__(self, filePath):
         # initialize our video writer
         self._fourcc = cv2.VideoWriter_fourcc(*"MJPG")
         self.filePath = filePath
         self._writer = None
-
-    def setFrameSize(self, frameSize):
-        self._frameSize = frameSize
 
     def write(self, frame):
         (H, W) = self._frameSize

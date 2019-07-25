@@ -4,15 +4,10 @@
 # import the necessary packages
 import numpy as np
 import argparse
-import imutils
-import time
-import cv2
 
-#from models import VideoDetectionModel
-#import models.VideoDetectionModel as VideoDetectionModel
-from models.VideoDetectionModel import VideoDetectionModel
-from lib.VideoInput import VideoInput
-from lib.VideoOutput import VideoOutput
+from models import VideoDetectionModel
+from lib import VideoInput
+from lib import FileVideoOutput
 
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
@@ -28,7 +23,7 @@ np.random.seed(42)
 
 model = VideoDetectionModel(args["confidence"], args["threshold"])
 vIn = VideoInput(args["input"]).start()
-vOut = VideoOutput(args["output"])
+vOut = FileVideoOutput(args["output"])
 
 isFirstFrame = True
 
