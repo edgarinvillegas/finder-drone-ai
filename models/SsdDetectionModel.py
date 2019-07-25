@@ -3,7 +3,6 @@ from abc import ABCMeta, abstractmethod
 import cv2
 import os
 import numpy as np
-import imutils
 import time
 from . import BaseDetectionModel
 

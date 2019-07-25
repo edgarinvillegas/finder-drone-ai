@@ -1,7 +1,4 @@
-#from abc import ABC
 import cv2
-#import BaseVideoOutput
-#from .BaseVideoOutput import BaseVideoOutput
 from . import BaseVideoOutput
 
 class WindowVideoOutput(BaseVideoOutput):

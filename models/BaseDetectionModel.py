@@ -1,4 +1,4 @@
-# Placeholder class, TODO: still need implementations!
+# Placeholder class, TODO: still needs implementations!
 from abc import ABCMeta, abstractmethod
 
 class BaseDetectionModel(metaclass=ABCMeta):
