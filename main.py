@@ -17,7 +17,7 @@ args = vars(ap.parse_args())
 
 ## --- VIDEO INPUT SELECTION ---
 # vIn = VideoInput().start()	# Webcam
-vIn = VideoInput("videos/dog-kid.mp4").start()  # File
+vIn = VideoInput("videos/dog-kid-small.mp4").start()  # File
 
 ## --- MODEL SELECTION ---
 model = YoloDetectionModel(args["confidence"], args["threshold"])	# Yolo
