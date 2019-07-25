@@ -11,28 +11,21 @@ from lib import FileVideoOutput, WindowVideoOutput
 
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
-ap.add_argument("-i", "--input", help="path to input video, if ignored it will use webcam")
-ap.add_argument("-o", "--output", help="path to output video, if ignored it will use window")
-# ap.add_argument("-y", "--type", required=False, help="network type")
 ap.add_argument("-c", "--confidence", type=float, default=0.5, help="minimum probability to filter weak detections")
 ap.add_argument("-t", "--threshold", type=float, default=0.3, help="threshold when applyong non-maxima suppression")
 args = vars(ap.parse_args())
 
+## --- VIDEO INPUT SELECTION ---
+# vIn = VideoInput().start()	# Webcam
+vIn = VideoInput("videos/dog-kid.mp4").start()  # File
 
-np.random.seed(42)
+## --- MODEL SELECTION ---
+model = YoloDetectionModel(args["confidence"], args["threshold"])	# Yolo
+# model = SsdDetectionModel(args["confidence"])		# Yolo
 
-#model = YoloDetectionModel(args["confidence"], args["threshold"])
-model = SsdDetectionModel(args["confidence"])
-
-if(args["input"] is None):
-	vIn = VideoInput().start()	# Webcam
-else:
-	vIn = VideoInput(args["input"]).start()
-
-if(args["output"] is None):
-	vOut = WindowVideoOutput()
-else:
-	vOut = FileVideoOutput(args["output"])
+## --- VIDEO OUTPUT SELECTION ---
+# vOut = WindowVideoOutput()			     # Show results on window
+vOut = FileVideoOutput("output/output.avi")	 # Creates an output video file
 
 isFirstFrame = True
 
@@ -46,10 +39,6 @@ while True:
 	if frame is None:
 		break
 
-	# initialize our lists of detected bounding boxes, confidences,
-	# and class IDs, respectively
-	#(boxes,  confidences, classIDs) = model.detect(frame)
-	#model.drawDetections(frame, boxes, confidences, classIDs)
 	detections = model.detect(frame)
 	model.drawDetections(frame, detections)
 
