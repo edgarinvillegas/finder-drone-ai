@@ -5,7 +5,7 @@
 import numpy as np
 import argparse
 
-from models import VideoDetectionModel
+from models import YoloDetectionModel, SsdDetectionModel
 from lib import VideoInput
 from lib import FileVideoOutput, WindowVideoOutput
 
@@ -21,7 +21,8 @@ args = vars(ap.parse_args())
 
 np.random.seed(42)
 
-model = VideoDetectionModel(args["confidence"], args["threshold"])
+#model = YoloDetectionModel(args["confidence"], args["threshold"])
+model = SsdDetectionModel(args["confidence"])
 
 if(args["input"] is None):
 	vIn = VideoInput().start()	# Webcam

@@ -2,9 +2,10 @@ import cv2
 import os
 import numpy as np
 import time
-from collections import namedtuple
+from . import BaseDetectionModel
 
-class VideoDetectionModel:
+#TODO: extend from BaseDetectionModel
+class YoloDetectionModel:
     #LABELS
     #COLORS
     #net
