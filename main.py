@@ -17,15 +17,15 @@ args = vars(ap.parse_args())
 
 ## --- VIDEO INPUT SELECTION ---
 # vIn = VideoInput().start()	# Webcam
-vIn = VideoInput("videos/dog-kid-small.mp4").start()  # File
+vIn = VideoInput("videos/dog-kid.mp4").start()  # File
 
 ## --- MODEL SELECTION ---
-model = YoloDetectionModel(args["confidence"], args["threshold"])	# Yolo
-# model = SsdDetectionModel(args["confidence"])		# Yolo
+# model = YoloDetectionModel(args["confidence"], args["threshold"])	# Yolo
+model = SsdDetectionModel(args["confidence"])		# SSD
 
 ## --- VIDEO OUTPUT SELECTION ---
-# vOut = WindowVideoOutput()			     # Show results on window
-vOut = FileVideoOutput("output/output.avi")	 # Creates an output video file
+vOut = WindowVideoOutput()			     # Show results on window
+# vOut = FileVideoOutput("output/output.avi")	 # Creates an output video file
 
 isFirstFrame = True
 
