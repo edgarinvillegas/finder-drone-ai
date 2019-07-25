@@ -1,6 +1,4 @@
 import cv2
-import os
-import numpy as np
 import imutils
 
 class VideoInput:

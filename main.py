@@ -12,6 +12,7 @@ import cv2
 #import models.VideoDetectionModel as VideoDetectionModel
 from models.VideoDetectionModel import VideoDetectionModel
 from lib.VideoInput import VideoInput
+from lib.VideoOutput import VideoOutput
 
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
@@ -25,23 +26,16 @@ args = vars(ap.parse_args())
 
 np.random.seed(42)
 
-#model = VideoDetectionModel.VideoDetectionModel()
 model = VideoDetectionModel(args["confidence"], args["threshold"])
-net = model.net
+vIn = VideoInput(args["input"]).start()
+vOut = VideoOutput(args["output"])
 
-vi = VideoInput(args["input"]).start()
-total = vi.getTotalFrames()
-
-writer = None
-
-
-# def processFrame(self, frame):
-
+isFirstFrame = True
 
 # loop over frames from the video file stream
 while True:
 	# read the next frame from the file
-	frame = vi.getNextFrame()
+	frame = vIn.getNextFrame()
 
 	# if the frame was not grabbed, then we have reached the end
 	# of the stream
@@ -55,23 +49,20 @@ while True:
 	detections = model.detect(frame)
 	model.drawDetections(frame, detections)
 
-	# check if the video writer is None
-	if writer is None:
-		# initialize our video writer
-		fourcc = cv2.VideoWriter_fourcc(*"MJPG")
-		writer = cv2.VideoWriter(args["output"], fourcc, 30,
-			(frame.shape[1], frame.shape[0]), True)
-
+	# check if it's the first frame
+	if isFirstFrame:
+		vOut.setFrameSize((frame.shape[0], frame.shape[1]))
 		# some information on processing single frame
+		total = vIn.getTotalFrames()
 		if total > 0:
 			elap = model.getFrameProcessTime()
 			print("[INFO] single frame took {:.4f} seconds".format(elap))
 			print("[INFO] estimated total time to finish: {:.4f}".format(elap * total))
-
+		isFirstFrame = False
 	# write the output frame to disk
-	writer.write(frame)
+	vOut.write(frame)
 
 # release the file pointers
 print("[INFO] cleaning up...")
-writer.release()
-vi.release()
+vOut.release()
+vIn.release()
