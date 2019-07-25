@@ -3,3 +3,4 @@
 from .BaseVideoOutput import BaseVideoOutput
 from .FileVideoOutput import FileVideoOutput
 from .VideoInput import VideoInput
+from .WindowVideoOutput import WindowVideoOutput

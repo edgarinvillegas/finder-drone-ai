@@ -6,6 +6,7 @@ from . import BaseVideoOutput
 
 class FileVideoOutput(BaseVideoOutput):
     def __init__(self, filePath):
+        super().__init__(filePath)
         # initialize our video writer
         self._fourcc = cv2.VideoWriter_fourcc(*"MJPG")
         self.filePath = filePath
@@ -18,4 +19,5 @@ class FileVideoOutput(BaseVideoOutput):
         self._writer.write(frame)
 
     def release(self):
+        super().release()
         self._writer.release()
