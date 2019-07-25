@@ -2,11 +2,13 @@ import cv2
 import imutils
 
 class VideoInput:
-    #vs
-    def __init__(self, filename):
-        self.filename = filename
+    # @private
+    # vs
+    # _total
+    def __init__(self, source = 0):
+        self.source = source
         # initialize the video stream, pointer to output video file, and frame dimensions
-        self.vs = cv2.VideoCapture(filename)
+        self.vs = cv2.VideoCapture(source)
         self._total = -1
 
     def start(self):

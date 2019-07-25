@@ -11,7 +11,8 @@ from lib import FileVideoOutput, WindowVideoOutput
 
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
-ap.add_argument("-i", "--input", required=True, help="path to input video")
+ap.add_argument("-i", "--input", help="path to input video, if ignored it will use webcam")
+ap.add_argument("-o", "--output", help="path to output video, if ignored it will use window")
 # ap.add_argument("-y", "--type", required=False, help="network type")
 ap.add_argument("-c", "--confidence", type=float, default=0.5, help="minimum probability to filter weak detections")
 ap.add_argument("-t", "--threshold", type=float, default=0.3, help="threshold when applyong non-maxima suppression")
@@ -21,10 +22,16 @@ args = vars(ap.parse_args())
 np.random.seed(42)
 
 model = VideoDetectionModel(args["confidence"], args["threshold"])
-vIn = VideoInput(args["input"]).start()
 
-#vOut = FileVideoOutput("output/dog-kid-small.avi")
-vOut = WindowVideoOutput()
+if(args["input"] is None):
+	vIn = VideoInput().start()	# Webcam
+else:
+	vIn = VideoInput(args["input"]).start()
+
+if(args["output"] is None):
+	vOut = WindowVideoOutput()
+else:
+	vOut = FileVideoOutput(args["output"])
 
 isFirstFrame = True
 
