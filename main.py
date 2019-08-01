@@ -5,7 +5,7 @@
 # import the necessary packages
 import argparse
 
-from models import YoloDetectionModel, SsdDetectionModel
+from models import YoloDetectionModel, SsdDetectionModel, FaceDetectionModel
 from lib import VideoInput
 from lib import FileVideoOutput, WindowVideoOutput
 
@@ -17,11 +17,13 @@ args = vars(ap.parse_args())
 
 ## --- VIDEO INPUT SELECTION ---
 # vIn = VideoInput().start()	# Webcam
+# vIn = VideoInput("rtsp://user:pass@192.168.1.100/11").start()	# Webcam with RTSP
 vIn = VideoInput("videos/dog-kid.mp4").start()  # File
 
 ## --- MODEL SELECTION ---
 # model = YoloDetectionModel(args["confidence"], args["threshold"])	# Yolo. [Make sure you have model file. See README.md]
 model = SsdDetectionModel(args["confidence"])		# SSD
+# model = FaceDetectionModel(args["confidence"])		# Face
 
 ## --- VIDEO OUTPUT SELECTION ---
 vOut = WindowVideoOutput()			     # Show results on window

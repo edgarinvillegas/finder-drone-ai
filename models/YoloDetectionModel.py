@@ -5,7 +5,7 @@ import time
 from . import BaseDetectionModel
 
 #TODO: extend from BaseDetectionModel
-class YoloDetectionModel:
+class YoloDetectionModel(BaseDetectionModel):
     #LABELS
     #COLORS
     #net
@@ -13,6 +13,7 @@ class YoloDetectionModel:
     #threshold?
     #frameSize
     def __init__(self, confidence, threshold):
+        super().__init__(confidence, threshold)
         modelPath = "models/yolo-coco"
         labelsPath = os.path.sep.join([modelPath, "coco.names"])
         # load the COCO class labels our YOLO model was trained on
@@ -56,10 +57,6 @@ class YoloDetectionModel:
 
         # initialize our lists of detected bounding boxes, confidences,
         # and class IDs, respectively
-        boxes = []
-        confidences = []
-        classIDs = []
-
         detections = []
 
         # loop over each of the layer outputs
@@ -90,9 +87,9 @@ class YoloDetectionModel:
 
                     # update our list of bounding box coordinates,
                     # confidences, and class IDs
-                    boxes.append([x, y, int(width), int(height)])
-                    confidences.append(float(confidence))
-                    classIDs.append(classID)
+                    # boxes.append([x, y, int(width), int(height)])
+                    # confidences.append(float(confidence))
+                    # classIDs.append(classID)
 
                     detections.append({
                         'box': [x, y, int(width), int(height)],
@@ -102,7 +99,10 @@ class YoloDetectionModel:
 
         # apply non-maxima suppression to suppress weak, overlapping
         # bounding boxes
+        boxes = list(map(lambda d: d['box'], detections))
+        confidences = list(map(lambda d: d['confidence'], detections))
         idxs = cv2.dnn.NMSBoxes(boxes, confidences, self.confidence, self.threshold)
+
         idxs = idxs.flatten()
         #return boxes[idxs], confidences[idxs], classIDs[idxs]
         return [detections[i] for i in idxs]
