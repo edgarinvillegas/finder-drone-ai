@@ -17,7 +17,7 @@ args = vars(ap.parse_args())
 
 ## --- VIDEO INPUT SELECTION ---
 # vIn = VideoInput().start()	# Webcam
-# vIn = VideoInput("rtsp://user:pass@192.168.1.100/11").start()	# Webcam with RTSP
+# vIn = VideoInput("rtsp://user:pass@192.168.1.100/11").start()	# IP cam with RTSP support
 vIn = VideoInput("videos/dog-kid.mp4").start()  # File
 
 ## --- MODEL SELECTION ---
