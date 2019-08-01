@@ -107,23 +107,6 @@ class YoloDetectionModel(BaseDetectionModel):
         #return boxes[idxs], confidences[idxs], classIDs[idxs]
         return [detections[i] for i in idxs]
 
-    def drawDetections(self, frame, detections):
-        #boxes, confidences, classIDs = (detections['box'], detections['confidence'], detections['classID']
-
-        for i in range(len(detections)):
-            box = detections[i]['box']
-            classID = detections[i]["classID"]
-            confidence = detections[i]["confidence"]
-            # extract the bounding box coordinates
-            (x, y) = (box[0], box[1])
-            (w, h) = (box[2], box[3])
-
-            # draw a bounding box rectangle and label on the frame
-            color = [int(c) for c in self.COLORS[detections[i]["classID"]]]
-            cv2.rectangle(frame, (x, y), (x + w, y + h), color, 2)
-            text = "{}: {:.4f}".format(self.LABELS[classID], confidence)
-            cv2.putText(frame, text, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
-
 
 
 

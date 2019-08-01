@@ -14,10 +14,10 @@ class SsdDetectionModel(BaseDetectionModel):
         self.confidence = confidence
         # initialize the list of class labels MobileNet SSD was trained to
         # detect, then generate a set of bounding box colors for each class
-        self.CLASSES = ["background", "aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car", "cat", "chair", "cow",
+        self.LABELS = ["background", "aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car", "cat", "chair", "cow",
                    "diningtable", "dog", "horse", "motorbike", "person", "pottedplant", "sheep", "sofa", "train",
                    "tvmonitor"]
-        self.COLORS = np.random.uniform(0, 255, size=(len(self.CLASSES), 3))
+        self.COLORS = np.random.uniform(0, 255, size=(len(self.LABELS), 3))
 
         # load our serialized model from disk
         print("[INFO] loading model...")
@@ -68,26 +68,6 @@ class SsdDetectionModel(BaseDetectionModel):
                     'classID': idx
                 })
         return detections
-
-    def drawDetections(self, frame, detections):
-        for i in range(len(detections)):
-            box = detections[i]['box']
-            classID = detections[i]["classID"]
-            confidence = detections[i]["confidence"]
-            # extract the bounding box coordinates
-            (x, y) = (box[0], box[1])
-            (w, h) = (box[2], box[3])
-
-            # display the prediction
-            label = "{}: {:.2f}%".format(self.CLASSES[classID], confidence * 100)
-            print("[INFO] {}".format(label))
-
-            # draw a bounding box rectangle and label on the frame
-            color = [int(c) for c in self.COLORS[detections[i]["classID"]]]
-            cv2.rectangle(frame, (x, y), (x + w, y + h), color, 2)
-            text = "{}: {:.4f}".format(self.CLASSES[classID], confidence)
-            cv2.putText(frame, text, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
-
 
 
 
