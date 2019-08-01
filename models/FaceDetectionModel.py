@@ -16,14 +16,18 @@ class FaceDetectionModel(BaseDetectionModel):    #LABELS
 
 
     def getFrameProcessTime(self):
-        return 0
+        (start, end) = self._frameProcessTime
+        return end - start
 
     def detect(self, frame):
         (h, w) = frame.shape[:2]
         blob = cv2.dnn.blobFromImage(cv2.resize(frame, (300, 300)), 1.0,
                                      (300, 300), (104.0, 177.0, 123.0))
+        start = time.time()
         self.net.setInput(blob)
         raw_detections = self.net.forward()
+        end = time.time()
+        self._frameProcessTime = (start, end)
 
         detections = []
 
