@@ -1,12 +1,8 @@
-# Placeholder class, TODO: still need implementations!
-from abc import ABCMeta, abstractmethod
 import cv2
-import os
 import numpy as np
 import time
 from . import BaseDetectionModel
 
-#TODO: extend from BaseDetectionModel
 class SsdDetectionModel(BaseDetectionModel):
     #LABELS
     #COLORS
