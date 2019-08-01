@@ -7,13 +7,14 @@ import time
 from . import BaseDetectionModel
 
 #TODO: extend from BaseDetectionModel
-class SsdDetectionModel:
+class SsdDetectionModel(BaseDetectionModel):
     #LABELS
     #COLORS
     #net
     #confidence
     #frameSize
     def __init__(self, confidence):
+        super().__init__(confidence)
         self.confidence = confidence
         # initialize the list of class labels MobileNet SSD was trained to
         # detect, then generate a set of bounding box colors for each class
