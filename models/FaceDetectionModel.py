@@ -12,22 +12,17 @@ class FaceDetectionModel(BaseDetectionModel):    #LABELS
     def __init__(self, confidence):
         super().__init__(confidence)
         self.confidence = confidence
+        self.LABELS = ['']
+        self.COLORS = [(0, 0, 255)]
         self.net = cv2.dnn.readNetFromCaffe("models/face/deploy.prototxt.txt", "models/face/res10_300x300_ssd_iter_140000.caffemodel")
 
-
-    def getFrameProcessTime(self):
-        (start, end) = self._frameProcessTime
-        return end - start
 
     def detect(self, frame):
         (h, w) = frame.shape[:2]
         blob = cv2.dnn.blobFromImage(cv2.resize(frame, (300, 300)), 1.0,
                                      (300, 300), (104.0, 177.0, 123.0))
-        start = time.time()
         self.net.setInput(blob)
         raw_detections = self.net.forward()
-        end = time.time()
-        self._frameProcessTime = (start, end)
 
         detections = []
 
@@ -53,26 +48,3 @@ class FaceDetectionModel(BaseDetectionModel):    #LABELS
             })
 
         return detections
-
-
-    # TODO: move this to another class
-    def drawDetections(self, frame, detections):
-        # loop over the detections
-        for i in range(len(detections)):
-            box = detections[i]['box']
-            classID = detections[i]["classID"]
-            confidence = detections[i]["confidence"]
-            # extract the bounding box coordinates
-            (x, y) = (box[0], box[1])
-            (w, h) = (box[2], box[3])
-
-            # display the prediction
-            classLabel = ''
-            label = "{}: {:.2f}%".format(classLabel, confidence * 100)
-            print("[INFO] {}".format(label))
-
-            # draw a bounding box rectangle and label on the frame
-            color = (0, 0, 255)
-            cv2.rectangle(frame, (x, y), (x + w, y + h), color, 2)
-            text = "{}: {:.4f}".format(classLabel, confidence)
-            cv2.putText(frame, text, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
