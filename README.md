@@ -1,5 +1,15 @@
 # video-detection-base
 
+Small base framework for detection in videos
+It supports:
+- Input: Video file/webcam/Camera (rtsp, rtmp feeds)
+- Models: Yolo objects/SSD objects/Caffe Face (caffe)
+- Output: Video file/Live window
+
+(Easily extendable in any layer)
+
+## Running the code
+
 1) If you want to use yolo (very likely), please download the model from here:
 https://drive.google.com/open?id=1nLw9T2f2qoWeLsJ6Rwz4GklBaA1Bvdda
 (alternate link: https://s3-us-west-2.amazonaws.com/static.pyimagesearch.com/opencv-yolo/yolo-object-detection.zip?__s=pyri6sq6kf2bmdenxa8k)
