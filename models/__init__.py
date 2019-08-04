@@ -4,3 +4,4 @@ from .BaseDetectionModel import BaseDetectionModel
 from .YoloDetectionModel import YoloDetectionModel
 from .SsdDetectionModel import SsdDetectionModel
 from .FaceDetectionModel import FaceDetectionModel
+from .CustomDetectionModel import CustomDetectionModel
