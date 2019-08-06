@@ -10,7 +10,9 @@ import cv2
 # model = SsdDetectionModel(args["confidence"])		# SSD
 model = CustomDetectionModel(confidence=0.5)		# Face
 
-frame = cv2.imread('images/084_0072.jpg')
+frame = cv2.imread('images/moose-in-room.jpg')
+#frame = cv2.imread('images/landscape-with-giraffe.jpg')
+
 detections = model.detect(frame)
 model.drawDetections(frame, detections)
 cv2.imshow("output", frame)
