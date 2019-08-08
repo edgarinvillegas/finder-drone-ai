@@ -103,6 +103,8 @@ class YoloDetectionModel(BaseDetectionModel):
         confidences = list(map(lambda d: d['confidence'], detections))
         idxs = cv2.dnn.NMSBoxes(boxes, confidences, self.confidence, self.threshold)
 
+        if len(idxs) == 0:
+            return []
         idxs = idxs.flatten()
         #return boxes[idxs], confidences[idxs], classIDs[idxs]
         return [detections[i] for i in idxs]

@@ -2,7 +2,7 @@ conda create -n finder-drone-env python=3.6.7
 conda activate finder-drone-env
 conda install pytorch=1.1.0 torchvision=0.3 cudatoolkit=9.0 -c pytorch
 # conda install jupyter notebook
-pip install syft
+pip install syft==0.1.22a1
 
 pip install opencv-contrib-python
 pip install matplotlib
