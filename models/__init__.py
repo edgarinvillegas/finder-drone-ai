@@ -4,5 +4,6 @@ from .BaseDetectionModel import BaseDetectionModel
 from .YoloDetectionModel import YoloDetectionModel
 from .SsdDetectionModel import SsdDetectionModel
 from .FaceDetectionModel import FaceDetectionModel
+from .FasterRcnnDetectionModel import FasterRcnnDetectionModel
 from .CustomClassifier import CustomClassifier
 from .CustomDetectionModel import CustomDetectionModel
