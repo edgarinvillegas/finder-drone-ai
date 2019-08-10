@@ -4,16 +4,30 @@
 
 from models import YoloDetectionModel, SsdDetectionModel, FaceDetectionModel, CustomDetectionModel
 import cv2
+import time
 
 ## --- MODEL SELECTION ---
-# model = YoloDetectionModel(args["confidence"], args["threshold"])	# Yolo. [Make sure you have model file. See README.md]
-# model = SsdDetectionModel(args["confidence"])		# SSD
-model = CustomDetectionModel(confidence=0.5)		# Face
+# model = YoloDetectionModel(0.5, 0.3)	# Yolo. [Make sure you have model file. See README.md]
+model = YoloDetectionModel(0.3, 0.3)	# Yolo. [Make sure you have model file. See README.md]
+# model = SsdDetectionModel(0.5)		# SSD
+# model = CustomDetectionModel(confidence=0.5)		# Face
 
-frame = cv2.imread('images/moose-in-room.jpg')
+#frame = cv2.imread('images/moose-in-room.jpg')
 #frame = cv2.imread('images/landscape-with-giraffe.jpg')
+#frame = cv2.imread('images/TelloPhoto/zorrino-gato-jeep-recortado.png')
+#frame = cv2.imread('images/TelloPhoto/1565125920104.png')
 
+# frame = cv2.imread('images/TelloPhoto/juanis-noche-3.png')
+## frame = cv2.imread('images/juanis-noche-3-rect.png')         #GRAVE!!
+frame = cv2.imread('images/cat-above-2.jpg')
+
+frame = cv2.GaussianBlur(frame, (11, 11), 0)
+
+start = time.time()
 detections = model.detect(frame)
+print('Took {} s'.format(time.time()-start))
 model.drawDetections(frame, detections)
-cv2.imshow("output", frame)
+#cv2.imwrite('images/real-and-toy-cats_output.jpg', frame)
+cv2.imshow("output", cv2.resize(frame, (1296, 968)))
 key = cv2.waitKey(0) & 0xFF
+cv2.destroyAllWindows()

@@ -1,12 +1,11 @@
 # USAGE
-# python create_dataset.py
+# python test_video_cat.py
 # (See README.md)
 
 # import the necessary packages
 import argparse
-import numpy as np
 
-from models import YoloDetectionModel, SsdDetectionModel, FaceDetectionModel, CustomDetectionModel
+from models import CatDetectionModel
 from lib import VideoInput
 from lib import FileVideoOutput, WindowVideoOutput
 import cv2
@@ -18,30 +17,19 @@ ap.add_argument("-t", "--threshold", type=float, default=0.3, help="threshold wh
 args = vars(ap.parse_args())
 
 ## --- VIDEO INPUT SELECTION ---
-currentClass = "whisky"
-vIn = VideoInput("dataset/{}.mp4".format(currentClass)).start()  # File
+vIn = VideoInput().start()	# Webcam
+# vIn = VideoInput("rtsp://user:pass@192.168.1.100/11").start()	# Webcam with RTSP
+# vIn = VideoInput("videos/dog-kid.mp4").start()  # File
+# vIn = VideoInput("videos/drone-tests/jardin02-lily_juanis_bicho.mp4").start()  # File
 
-## --- MODEL SELECTION ---
-model = YoloDetectionModel(args["confidence"], args["threshold"])	# Yolo. [Make sure you have model file. See README.md]
-# model = SsdDetectionModel(args["confidence"])		# SSD
-# model = FaceDetectionModel(args["confidence"])		# Face
-# model = CustomDetectionModel(confidence=0.3)
+model = CatDetectionModel(args["confidence"])
 
 ## --- VIDEO OUTPUT SELECTION ---
 vOut = WindowVideoOutput()			     # Show results on window
 # vOut = FileVideoOutput("output/output.avi")	 # Creates an output video file
 
-isFirstFrame = True
-
-#def processCatDetection()
-
-i = 1
-
-def is_cat(detection):
-	label = model.LABELS[detection['classID']];
-	return label == 'cat'
-	return label in ['cat', 'dog', 'bird', 'person']
-
+f = 0
+process_every = 1 # Number of frames
 # loop over frames from the video file stream
 while True:
 	# read the next frame from the file
@@ -51,31 +39,14 @@ while True:
 	# of the stream
 	if frame is None:
 		break
-
-	i += 1
-	if i % 10 != 0:
-		continue
+	f += 1
+	if f % process_every != 0: continue
 
 	detections = model.detect(frame)
-	catDetection = next(filter(is_cat, detections), None)
-	if not (catDetection is None):
-		x, y, w, h = catDetection['box']
-		subframe = frame[y:y+h, x:x+w]
-		r = np.random.rand()
-		if r < 0.6:
-			set = 'train'
-		elif r < 0.8:
-			set = 'valid'
-		else:
-			set = 'test'
-
-		# for example: dataset/train/juana1.jpg
-		cv2.imwrite('dataset/{}/ywhisky/{}{}.jpg'.format(set, currentClass, currentClass, i), subframe)
-
 	model.drawDetections(frame, detections)
 
 	# check if it's the first frame
-	if isFirstFrame:
+	if f == 1:
 		vOut.setFrameSize((frame.shape[0], frame.shape[1]))
 		# some information on processing single frame
 		total = vIn.getTotalFrames()

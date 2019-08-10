@@ -5,5 +5,6 @@ from .YoloDetectionModel import YoloDetectionModel
 from .SsdDetectionModel import SsdDetectionModel
 from .FaceDetectionModel import FaceDetectionModel
 from .FasterRcnnDetectionModel import FasterRcnnDetectionModel
+from .CatDetectionModel import CatDetectionModel
 from .CustomClassifier import CustomClassifier
 from .CustomDetectionModel import CustomDetectionModel

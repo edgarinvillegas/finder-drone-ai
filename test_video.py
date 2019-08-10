@@ -17,10 +17,10 @@ ap.add_argument("-t", "--threshold", type=float, default=0.3, help="threshold wh
 args = vars(ap.parse_args())
 
 ## --- VIDEO INPUT SELECTION ---
-#vIn = VideoInput().start()	# Webcam
+vIn = VideoInput().start()	# Webcam
 # vIn = VideoInput("rtsp://user:pass@192.168.1.100/11").start()	# Webcam with RTSP
-vIn = VideoInput("videos/dog-kid.mp4").start()  # File
-# vIn = VideoInput("D:/edgarin/mycode/(COURSES)/fbook-ia/drone-find-anything/cats-raw/raw/Juanis/VID_20190805_233242.mp4").start()  # File
+# vIn = VideoInput("videos/dog-kid.mp4").start()  # File
+# vIn = VideoInput("videos/drone-tests/jardin02-lily_juanis_bicho.mp4").start()  # File
 
 ## --- MODEL SELECTION ---
 # model = YoloDetectionModel(args["confidence"], args["threshold"])	# Yolo. [Make sure you have model file. See README.md]

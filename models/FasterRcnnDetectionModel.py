@@ -1,11 +1,9 @@
 # import necessary libraries
 from PIL import Image
-import matplotlib.pyplot as plt
 import torch
 import torchvision.transforms as T
 import torchvision
 import numpy as np
-import cv2
 from . import BaseDetectionModel
 
 class FasterRcnnDetectionModel(BaseDetectionModel):  #LABELS
@@ -37,7 +35,9 @@ class FasterRcnnDetectionModel(BaseDetectionModel):  #LABELS
             'clock', 'vase', 'scissors', 'teddy bear', 'hair drier', 'toothbrush'
         ]
         self.COLORS = np.random.uniform(0, 255, size=(len(self.LABELS), 3))
+        print('Loading FasterRcnnDetectionModel...')
         self.net = torchvision.models.detection.fasterrcnn_resnet50_fpn(pretrained=True)
+        print('FasterRcnnDetectionModel loaded')
         self.useCuda = torch.cuda.is_available()
         if self.useCuda:
             self.net.cuda()
@@ -46,9 +46,11 @@ class FasterRcnnDetectionModel(BaseDetectionModel):  #LABELS
 
     def detect(self, frame):
         #(h, w) = frame.shape[:2]
-        img = Image.fromarray(frame)
-        img = self.transform(img)
+        # img = Image.fromarray(frame)  # Not needed anymore
+        # img90 = self.transform(frame.rot90())
+        img = self.transform(frame)
         if self.useCuda: img = img.cuda()
+
         pred = self.net.forward([img])
         if self.useCuda:
             pred = np.array(pred)
