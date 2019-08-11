@@ -7,6 +7,7 @@ import os
 import argparse
 from collections import deque
 from enum import Enum
+from models import FaceDetectionModel
 
 # standard argparse stuff
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter, add_help=False)
@@ -32,9 +33,6 @@ step_size = 40
 
 S2 = 5
 UDOffset = 150
-
-# this is just the bound box sizes that openCV spits out *shrug*
-faceSizes = [1026, 684, 456, 304, 202, 136, 90]
 
 # These are the values in which kicks in speed up mode, as of now, this hasn't been finalized or fine tuned so be careful
 # Tested are 3, 4, 5
@@ -116,7 +114,7 @@ if args.save_session:
 
 PMode = Enum('PilotMode', 'NONE SPIRAL FOLLOW FOLLOW_ENABLED')
 
-class FrontEnd(object):
+class DroneUI(object):
     
     def __init__(self):
         # Init Tello object that interacts with the Tello drone
@@ -131,6 +129,7 @@ class FrontEnd(object):
         self.mode = PMode.NONE  # Can be '', 'SPIRAL', 'OVERRIDE' or 'FOLLOW'
 
         self.send_rc_control = False
+        self.model = FaceDetectionModel(0.5)
 
     def run(self):
 
@@ -337,8 +336,7 @@ class FrontEnd(object):
         # return (255,255,255)
         gray = cv2.cvtColor(frameRet, cv2.COLOR_BGR2GRAY)
         faces = face_cascade.detectMultiScale(gray, scaleFactor=1.5, minNeighbors=2)
-        # Target size
-        tSize = faceSizes[tDistance]
+        # detections = self.model.detect(frameRet)
         # These are our center dimensions
         cWidth = int(dimensions[0] / 2)
         cHeight = int(dimensions[1] / 2)
@@ -349,7 +347,7 @@ class FrontEnd(object):
         #if self.send_rc_control and not OVERRIDE:
         if self.mode == PMode.FOLLOW and not OVERRIDE:
             for (x, y, w, h) in faces:
-
+                print('w: ', w, 'h: ', h, 'area: ', w*h)
                 #
                 roi_gray = gray[y:y + h, x:x + w]  # (ycord_start, ycord_end)
                 roi_color = frameRet[y:y + h, x:x + w]
@@ -368,8 +366,8 @@ class FrontEnd(object):
                 targ_cord_y = int((end_cord_y + y) / 2) + UDOffset
 
                 # This calculates the vector from your face to the center of the screen
-                vTrue = np.array((cWidth, cHeight, tSize))
-                vTarget = np.array((targ_cord_x, targ_cord_y, end_size))
+                vTrue = np.array((cWidth, cHeight))
+                vTarget = np.array((targ_cord_x, targ_cord_y))
                 vDistance = vTrue - vTarget
 
                 #
@@ -391,18 +389,6 @@ class FrontEnd(object):
                         self.up_down_velocity = -S
                     else:
                         self.up_down_velocity = 0
-
-                    F = 0
-                    if abs(vDistance[2]) > acc[tDistance]:
-                        F = S
-
-                    # for forward back
-                    if vDistance[2] > 0:
-                        self.for_back_velocity = S + F
-                    elif vDistance[2] < 0:
-                        self.for_back_velocity = -S - F
-                    else:
-                        self.for_back_velocity = 0
 
                 # Draw the face bounding box
                 cv2.rectangle(frameRet, (x, y), (end_cord_x, end_cord_y), fbCol, fbStroke)
@@ -444,7 +430,7 @@ def main():
     # for i in range(8):
     #     key = next_auto_key()
     #     print(chr(key))
-    frontend = FrontEnd()
+    frontend = DroneUI()
 
     # run frontend
     frontend.run()
