@@ -32,11 +32,11 @@ S = 20
 step_size = 40
 
 S2 = 5
-UDOffset = 150
 
+#UDOffset = 150
 # These are the values in which kicks in speed up mode, as of now, this hasn't been finalized or fine tuned so be careful
 # Tested are 3, 4, 5
-acc = [500,250,250,150,110,70,50]
+#acc = [500,250,250,150,110,70,50]
 
 # Frames per second of the window display
 FPS = 3
@@ -360,6 +360,9 @@ class DroneUI(object):
                 end_cord_x = x + w
                 end_cord_y = y + h
                 end_size = w * 2
+
+                # This is not face detection so we don't need offset
+                UDOffset = 0
 
                 # these are our target coordinates
                 targ_cord_x = int((end_cord_x + x) / 2)
