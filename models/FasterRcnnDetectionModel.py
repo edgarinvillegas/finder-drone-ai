@@ -13,8 +13,9 @@ class FasterRcnnDetectionModel(BaseDetectionModel):  #LABELS
     #threshold?
     #frameSize
     # Confidence is called thershold in FasterRCNN
-    def __init__(self, threshold):
-        super().__init__(threshold)
+    def __init__(self, confidence, threshold=0.3):
+        super().__init__(confidence, threshold)
+        self.confidence = confidence
         self.threshold = threshold
         # Class labels from official PyTorch documentation for the pretrained model
         # Note that there are some N/A's
@@ -43,7 +44,7 @@ class FasterRcnnDetectionModel(BaseDetectionModel):  #LABELS
             self.net.cuda()
         self.net.eval() # To use model for inference
         self.transform = T.Compose([T.ToTensor()])
-
+    
     def detect(self, frame):
         #(h, w) = frame.shape[:2]
         # img = Image.fromarray(frame)  # Not needed anymore
@@ -51,17 +52,31 @@ class FasterRcnnDetectionModel(BaseDetectionModel):  #LABELS
         img = self.transform(frame)
         if self.useCuda: img = img.cuda()
 
-        pred = self.net.forward([img])
-        if self.useCuda:
-            pred = np.array(pred)
-            pred[0]['labels'] = pred[0]['labels'].cpu()
-            pred[0]['boxes'] = pred[0]['boxes'].cpu()
-            pred[0]['scores'] = pred[0]['scores'].cpu()
+        preds = self.net.forward([img])
+        pred = preds[0] # Because it can predict several images at a time, we're only doing for 1
+        #print('raw pred:', print(pred))
 
-        pred_classes = [i for i in list(pred[0]['labels'].numpy())]
-        pred_boxes = [[(i[0], i[1]), (i[2], i[3])] for i in list(pred[0]['boxes'].detach().numpy())]
-        pred_score = list(pred[0]['scores'].detach().numpy())
-        pre_pred_t = [pred_score.index(x) for x in pred_score if x > self.threshold]        
+        # Apply non-maximum-supression (with cuda if available)
+        nms_indexes = torchvision.ops.nms(pred['boxes'], pred['scores'], self.threshold)
+        pred['labels'] = torch.index_select(pred['labels'], 0, nms_indexes)
+        pred['boxes'] = torch.index_select(pred['boxes'], 0, nms_indexes)
+        pred['scores'] = torch.index_select(pred['scores'], 0, nms_indexes)
+
+        #print('nms', nms_indexes)
+        #print('pred after nms', pred)
+        if self.useCuda:
+            preds = np.array(preds)
+            pred['labels'] = pred['labels'].cpu()
+            pred['boxes'] = pred['boxes'].cpu()
+            pred['scores'] = pred['scores'].cpu()
+            nms_indexes = nms_indexes.cpu()
+
+
+
+        pred_classes = [i for i in list(pred['labels'].numpy())]
+        pred_boxes = [[(i[0], i[1]), (i[2], i[3])] for i in list(pred['boxes'].detach().numpy())]
+        pred_score = list(pred['scores'].detach().numpy())
+        pre_pred_t = [pred_score.index(x) for x in pred_score if x > self.confidence]
         pred_t = 0 if len(pre_pred_t) == 0 else pre_pred_t[-1]
         pred_boxes = pred_boxes[:pred_t + 1]
         pred_classes = pred_classes[:pred_t + 1]
