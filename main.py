@@ -44,8 +44,6 @@ FPS = 3
 # Frames needed per step
 frames_step = step_size / S * FPS
 
-dimensions = (960, 720)
-
 # operations_queue = deque([
 #     # {'key': 'u', 'frames': 20 * FPS}
 #     {'key': 'i', 'frames': 1 * int(frames_step)},
@@ -331,8 +329,9 @@ class DroneUI(object):
     def track_object(self, OVERRIDE, frameRet, szX, szY, tDistance):
         detections = self.model.detect(frameRet)
         # These are our center dimensions
-        cWidth = int(dimensions[0] / 2)
-        cHeight = int(dimensions[1] / 2)
+        (frame_h, frame_w) = frameRet.shape[:2]
+        cWidth = int(frame_w / 2)
+        cHeight = int(frame_h / 2)
         noDetections = len(detections) == 0
         if len(detections) > 0:
             self.mode = PMode.FOLLOW
