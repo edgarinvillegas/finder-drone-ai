@@ -46,10 +46,6 @@ frames_step = step_size / S * FPS
 
 dimensions = (960, 720)
 
-# 
-face_cascade = cv2.CascadeClassifier('cascades/data/haarcascade_frontalface_alt2.xml')
-recognizer = cv2.face.LBPHFaceRecognizer_create()
-
 # operations_queue = deque([
 #     # {'key': 'u', 'frames': 20 * FPS}
 #     {'key': 'i', 'frames': 1 * int(frames_step)},
@@ -269,7 +265,7 @@ class DroneUI(object):
 
             dCol = (0, 255, 255)
             if not OVERRIDE and self.send_rc_control and FOLLOW_ENABLED:
-                dCol = self.track_face(OVERRIDE, frameRet, szX, szY, tDistance)
+                dCol = self.track_object(OVERRIDE, frameRet, szX, szY, tDistance)
 
             if OVERRIDE:
                 show = "OVERRIDE"
@@ -332,9 +328,7 @@ class DroneUI(object):
         else:
             self.left_right_velocity = 0
 
-    def track_face(self, OVERRIDE, frameRet, szX, szY, tDistance):
-        # gray = cv2.cvtColor(frameRet, cv2.COLOR_BGR2GRAY)
-        # faces = face_cascade.detectMultiScale(gray, scaleFactor=1.5, minNeighbors=2)
+    def track_object(self, OVERRIDE, frameRet, szX, szY, tDistance):
         detections = self.model.detect(frameRet)
         # These are our center dimensions
         cWidth = int(dimensions[0] / 2)
@@ -342,16 +336,16 @@ class DroneUI(object):
         noDetections = len(detections) == 0
         if len(detections) > 0:
             self.mode = PMode.FOLLOW
-        # if we've given rc controls & get face coords returned
+        # if we've given rc controls & get object coords returned
         #if self.send_rc_control and not OVERRIDE:
         if self.mode == PMode.FOLLOW and not OVERRIDE:
             for det in detections:
                 (x, y, w, h) = det['box']
                 print('w: ', w, 'h: ', h, 'area: ', w*h)
 
-                # setting Face Box properties
-                fbCol = (255, 0, 0)  # BGR 0-255
-                fbStroke = 2
+                # setting Object Box properties
+                obCol = (255, 0, 0)  # BGR 0-255
+                obStroke = 2
 
                 # end coords are the end of the bounding box x & y
                 end_cord_x = x + w
@@ -365,7 +359,7 @@ class DroneUI(object):
                 targ_cord_x = int((end_cord_x + x) / 2)
                 targ_cord_y = int((end_cord_y + y) / 2) + UDOffset
 
-                # This calculates the vector from your face to the center of the screen
+                # This calculates the vector from the object to the center of the screen
                 vTrue = np.array((cWidth, cHeight))
                 vTarget = np.array((targ_cord_x, targ_cord_y))
                 vDistance = vTrue - vTarget
@@ -390,20 +384,20 @@ class DroneUI(object):
                     else:
                         self.up_down_velocity = 0
 
-                # Draw the face bounding box
-                cv2.rectangle(frameRet, (x, y), (end_cord_x, end_cord_y), fbCol, fbStroke)
+                # Draw the object bounding box
+                cv2.rectangle(frameRet, (x, y), (end_cord_x, end_cord_y), obCol, obStroke)
 
                 # Draw the target as a circle
                 cv2.circle(frameRet, (targ_cord_x, targ_cord_y), 10, (0, 255, 0), 2)
 
                 # Draw the safety zone
                 cv2.rectangle(frameRet, (targ_cord_x - szX, targ_cord_y - szY), (targ_cord_x + szX, targ_cord_y + szY),
-                              (0, 255, 0), fbStroke)
+                              (0, 255, 0), obStroke)
 
-                # Draw the estimated drone vector position in relation to face bounding box
+                # Draw the estimated drone vector position in relation to object bounding box
                 cv2.putText(frameRet, str(vDistance), (0, 64), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
 
-            # if there are no faces detected, don't do anything
+            # if there are no objects detected, don't do anything
             if noDetections:
                 self.yaw_velocity = 0
                 self.up_down_velocity = 0
