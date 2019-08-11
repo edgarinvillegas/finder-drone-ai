@@ -65,7 +65,7 @@ while True:
 		isFirstFrame = False
 	# write the output frame to disk
 	vOut.write(frame)
-	#print("Avg frame detection time: {:.4f}s".format(total_time / n_frames_processed))
+	print("Avg frame detection time: {:.4f}s".format(total_time / n_frames_processed))
 	print("FPS: {:.4f}".format(n_frames_processed / total_time ))
 
 # release the file pointers

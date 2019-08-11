@@ -44,7 +44,12 @@ class FasterRcnnDetectionModel(BaseDetectionModel):  #LABELS
             self.net.cuda()
         self.net.eval() # To use model for inference
         self.transform = T.Compose([T.ToTensor()])
-    
+
+    # This is intended to be overriden by derived classes that need single class detection
+    # TODO: Change this to a proper filter that gets a detection as parameter
+    def detect_single_class(self):
+        return -1
+
     def detect(self, frame):
         #(h, w) = frame.shape[:2]
         # img = Image.fromarray(frame)  # Not needed anymore
@@ -54,7 +59,14 @@ class FasterRcnnDetectionModel(BaseDetectionModel):  #LABELS
 
         preds = self.net.forward([img])
         pred = preds[0] # Because it can predict several images at a time, we're only doing for 1
-        #print('raw pred:', print(pred))
+
+        # If the model is for single class, pre-filter it
+        if self.detect_single_class() > 0:
+            filtered_indexes = pred['labels'] == self.detect_single_class()
+            print('filtered_indexes', filtered_indexes)
+            pred['labels'] = pred['labels'][filtered_indexes]
+            pred['boxes'] = pred['boxes'][filtered_indexes]
+            pred['scores'] = pred['scores'][filtered_indexes]
 
         # Apply non-maximum-supression (with cuda if available)
         nms_indexes = torchvision.ops.nms(pred['boxes'], pred['scores'], self.threshold)
@@ -62,16 +74,11 @@ class FasterRcnnDetectionModel(BaseDetectionModel):  #LABELS
         pred['boxes'] = torch.index_select(pred['boxes'], 0, nms_indexes)
         pred['scores'] = torch.index_select(pred['scores'], 0, nms_indexes)
 
-        #print('nms', nms_indexes)
-        #print('pred after nms', pred)
         if self.useCuda:
             preds = np.array(preds)
             pred['labels'] = pred['labels'].cpu()
             pred['boxes'] = pred['boxes'].cpu()
             pred['scores'] = pred['scores'].cpu()
-            nms_indexes = nms_indexes.cpu()
-
-
 
         pred_classes = [i for i in list(pred['labels'].numpy())]
         pred_boxes = [[(i[0], i[1]), (i[2], i[3])] for i in list(pred['boxes'].detach().numpy())]

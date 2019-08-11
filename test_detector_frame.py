@@ -2,15 +2,16 @@
 # python test_detector_frame.py
 # (See README.md)
 
-from models import YoloDetectionModel, SsdDetectionModel, FaceDetectionModel, CustomDetectionModel
+from models import YoloDetectionModel, SsdDetectionModel, FaceDetectionModel, CustomDetectionModel, FasterRcnnDetectionModel
 import cv2
 import time
 
 ## --- MODEL SELECTION ---
 # model = YoloDetectionModel(0.5, 0.3)	# Yolo. [Make sure you have model file. See README.md]
-model = YoloDetectionModel(0.3, 0.3)	# Yolo. [Make sure you have model file. See README.md]
+# model = YoloDetectionModel(0.3, 0.3)	# Yolo. [Make sure you have model file. See README.md]
 # model = SsdDetectionModel(0.5)		# SSD
 # model = CustomDetectionModel(confidence=0.5)		# Face
+model = FasterRcnnDetectionModel(0.25)
 
 #frame = cv2.imread('images/moose-in-room.jpg')
 #frame = cv2.imread('images/landscape-with-giraffe.jpg')
@@ -19,7 +20,8 @@ model = YoloDetectionModel(0.3, 0.3)	# Yolo. [Make sure you have model file. See
 
 # frame = cv2.imread('images/TelloPhoto/juanis-noche-3.png')
 ## frame = cv2.imread('images/juanis-noche-3-rect.png')         #GRAVE!!
-frame = cv2.imread('images/cat-above-2.jpg')
+# frame = cv2.imread('images/cat-above-2.jpg')
+frame = cv2.imread('images/lily-juanis-jardin-frame.png')
 
 frame = cv2.GaussianBlur(frame, (11, 11), 0)
 
