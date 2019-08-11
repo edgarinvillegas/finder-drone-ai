@@ -8,6 +8,7 @@ import argparse
 from models import CatDetectionModel
 from lib import VideoInput
 from lib import FileVideoOutput, WindowVideoOutput
+import time
 import cv2
 
 # construct the argument parse and parse the arguments
@@ -17,10 +18,10 @@ ap.add_argument("-t", "--threshold", type=float, default=0.3, help="threshold wh
 args = vars(ap.parse_args())
 
 ## --- VIDEO INPUT SELECTION ---
-vIn = VideoInput().start()	# Webcam
+# vIn = VideoInput().start()	# Webcam
 # vIn = VideoInput("rtsp://user:pass@192.168.1.100/11").start()	# Webcam with RTSP
 # vIn = VideoInput("videos/dog-kid.mp4").start()  # File
-# vIn = VideoInput("videos/drone-tests/jardin02-lily_juanis_bicho.mp4").start()  # File
+vIn = VideoInput("videos/drone-tests/jardin02-lily_juanis_bicho.mp4").start()  # File
 
 model = CatDetectionModel(args["confidence"])
 
@@ -29,8 +30,10 @@ vOut = WindowVideoOutput()			     # Show results on window
 # vOut = FileVideoOutput("output/output.avi")	 # Creates an output video file
 
 f = 0
-process_every = 1 # Number of frames
+process_every = 5 # Number of frames
 # loop over frames from the video file stream
+total_time = 0
+n_frames_processed = 0
 while True:
 	# read the next frame from the file
 	frame = vIn.getNextFrame()
@@ -42,7 +45,12 @@ while True:
 	f += 1
 	if f % process_every != 0: continue
 
+	detection_start = time.time()
 	detections = model.detect(frame)
+	detection_end = time.time()
+	total_time += detection_end - detection_start
+	n_frames_processed += 1
+
 	model.drawDetections(frame, detections)
 
 	# check if it's the first frame
@@ -57,8 +65,11 @@ while True:
 		isFirstFrame = False
 	# write the output frame to disk
 	vOut.write(frame)
+	#print("Avg frame detection time: {:.4f}s".format(total_time / n_frames_processed))
+	print("FPS: {:.4f}".format(n_frames_processed / total_time ))
 
 # release the file pointers
 print("[INFO] cleaning up...")
 vOut.release()
 vIn.release()
+
