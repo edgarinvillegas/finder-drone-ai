@@ -6,8 +6,10 @@ pip install syft==0.1.22a1
 # Inferer device
 pip install opencv-contrib-python
 pip install imutils
-kornia
 
 # training development device
 pip install matplotlib
 # conda install jupyter notebook
+
+# drone connected device
+pip install djitellopy
