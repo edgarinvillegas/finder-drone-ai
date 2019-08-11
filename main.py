@@ -333,24 +333,21 @@ class DroneUI(object):
             self.left_right_velocity = 0
 
     def track_face(self, OVERRIDE, frameRet, szX, szY, tDistance):
-        # return (255,255,255)
-        gray = cv2.cvtColor(frameRet, cv2.COLOR_BGR2GRAY)
-        faces = face_cascade.detectMultiScale(gray, scaleFactor=1.5, minNeighbors=2)
-        # detections = self.model.detect(frameRet)
+        # gray = cv2.cvtColor(frameRet, cv2.COLOR_BGR2GRAY)
+        # faces = face_cascade.detectMultiScale(gray, scaleFactor=1.5, minNeighbors=2)
+        detections = self.model.detect(frameRet)
         # These are our center dimensions
         cWidth = int(dimensions[0] / 2)
         cHeight = int(dimensions[1] / 2)
-        noFaces = len(faces) == 0
-        if len(faces) > 0:
+        noDetections = len(detections) == 0
+        if len(detections) > 0:
             self.mode = PMode.FOLLOW
         # if we've given rc controls & get face coords returned
         #if self.send_rc_control and not OVERRIDE:
         if self.mode == PMode.FOLLOW and not OVERRIDE:
-            for (x, y, w, h) in faces:
+            for det in detections:
+                (x, y, w, h) = det['box']
                 print('w: ', w, 'h: ', h, 'area: ', w*h)
-                #
-                roi_gray = gray[y:y + h, x:x + w]  # (ycord_start, ycord_end)
-                roi_color = frameRet[y:y + h, x:x + w]
 
                 # setting Face Box properties
                 fbCol = (255, 0, 0)  # BGR 0-255
@@ -407,7 +404,7 @@ class DroneUI(object):
                 cv2.putText(frameRet, str(vDistance), (0, 64), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
 
             # if there are no faces detected, don't do anything
-            if noFaces:
+            if noDetections:
                 self.yaw_velocity = 0
                 self.up_down_velocity = 0
                 self.for_back_velocity = 0
