@@ -7,7 +7,7 @@ import os
 import argparse
 from collections import deque
 from enum import Enum
-from models import FaceDetectionModel
+from models import FaceDetectionModel, CatDetectionModel
 
 # standard argparse stuff
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter, add_help=False)
@@ -17,7 +17,7 @@ parser.add_argument('-d', '--distance', type=int, default=3,
     help='use -d to change the distance of the drone. Range 0-6')
 parser.add_argument('-sx', '--saftey_x', type=int, default=100,
     help='use -sx to change the saftey bound on the x axis . Range 0-480')
-parser.add_argument('-sy', '--saftey_y', type=int, default=55,
+parser.add_argument('-sy', '--saftey_y', type=int, default=100,
     help='use -sy to change the saftey bound on the y axis . Range 0-360')
 parser.add_argument('-ss', "--save_session", action='store_true',
     help='add the -ss flag to save your session as an image sequence in the Sessions folder')
@@ -123,7 +123,6 @@ class DroneUI(object):
         self.mode = PMode.NONE  # Can be '', 'SPIRAL', 'OVERRIDE' or 'FOLLOW'
 
         self.send_rc_control = False
-        self.model = FaceDetectionModel(0.5)
 
     def run(self):
 
@@ -144,13 +143,15 @@ class DroneUI(object):
             print("Could not start video stream")
             return
 
+        self.model = CatDetectionModel(0.5)
+
         frame_read = self.tello.get_frame_read()
 
         should_stop = False
         imgCount = 0
 
         OVERRIDE = False
-        FOLLOW_ENABLED = False
+        FOLLOW_ENABLED = False  # Set to true to automatically start in follow mode
         self.mode = PMode.NONE
 
         # oSpeed = args.override_speed
