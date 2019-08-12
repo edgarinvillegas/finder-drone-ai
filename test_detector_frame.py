@@ -2,7 +2,7 @@
 # python test_detector_frame.py
 # (See README.md)
 
-from models import YoloDetectionModel, SsdDetectionModel, FaceDetectionModel, CustomDetectionModel, FasterRcnnDetectionModel
+from models import YoloDetectionModel, SsdDetectionModel, FaceDetectionModel, CustomDetectionModel, FasterRcnnDetectionModel, CatDetectionModel
 import cv2
 import time
 
@@ -11,7 +11,8 @@ import time
 # model = YoloDetectionModel(0.3, 0.3)	# Yolo. [Make sure you have model file. See README.md]
 # model = SsdDetectionModel(0.5)		# SSD
 # model = CustomDetectionModel(confidence=0.5)		# Face
-model = FasterRcnnDetectionModel(0.25)
+# model = FasterRcnnDetectionModel(0.25)
+model = CatDetectionModel(0.5)
 
 #frame = cv2.imread('images/moose-in-room.jpg')
 #frame = cv2.imread('images/landscape-with-giraffe.jpg')

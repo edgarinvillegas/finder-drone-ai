@@ -14,7 +14,7 @@ import cv2
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
 ap.add_argument("-c", "--confidence", type=float, default=0.5, help="minimum probability to filter weak detections")
-ap.add_argument("-t", "--threshold", type=float, default=0.3, help="threshold when applyong non-maxima suppression")
+ap.add_argument("-t", "--threshold", type=float, default=0.1, help="threshold when applying non-maxima suppression")
 args = vars(ap.parse_args())
 
 ## --- VIDEO INPUT SELECTION ---
@@ -23,7 +23,7 @@ args = vars(ap.parse_args())
 # vIn = VideoInput("videos/dog-kid.mp4").start()  # File
 vIn = VideoInput("videos/drone-tests/jardin02-lily_juanis_bicho.mp4").start()  # File
 
-model = CatDetectionModel(args["confidence"])
+model = CatDetectionModel(args["confidence"], args["threshold"])
 
 ## --- VIDEO OUTPUT SELECTION ---
 vOut = WindowVideoOutput()			     # Show results on window

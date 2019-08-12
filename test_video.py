@@ -26,7 +26,7 @@ vIn = VideoInput().start()	# Webcam
 # model = YoloDetectionModel(args["confidence"], args["threshold"])	# Yolo. [Make sure you have model file. See README.md]
 # model = SsdDetectionModel(args["confidence"])		# SSD
 # model = FaceDetectionModel(args["confidence"])		# Face
-model = FasterRcnnDetectionModel(args["confidence"])
+model = FasterRcnnDetectionModel(args["confidence"], args["threshold"])
 # model = CustomDetectionModel(confidence=0.3)
 
 ## --- VIDEO OUTPUT SELECTION ---
