@@ -7,7 +7,7 @@ def mission_from_str(str_mission):
         'r': 'right',
         'b': 'back',
         'l': 'left',
-        'p': 'pause'
+        '-': 'pause'
     }
     s = None
     for i, c in enumerate(str_mission):

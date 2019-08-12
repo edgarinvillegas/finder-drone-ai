@@ -58,8 +58,9 @@ old_mission = [
 ]
 
 #mission = mission_from_str('fbfb')
-mission = mission_from_str('fffppbbbppfffppbbb')
-print(mission)
+#mission = mission_from_str('fff-bbb-fff-bbb')
+mission = mission_from_str('ff-l-bb')
+#print(mission)
 
 # This transforms the mission in a set of simulated keys to be pressed.
 # next_auto_key will be a function that returns the new key to press every time
@@ -163,7 +164,7 @@ class DroneUI(object):
             k = cv2.waitKey(20)
 
             try:
-                if chr(k) in 'ikjluoyh': OVERRIDE = True
+                if chr(k) in 'ikjluoyhp': OVERRIDE = True
             except:
                 ...
 
