@@ -6,15 +6,17 @@ def mission_from_str(str_mission):
         'f': 'forward',
         'r': 'right',
         'b': 'back',
-        'l': 'left'
+        'l': 'left',
+        'p': 'pause'
     }
     s = None
     for i, c in enumerate(str_mission):
+        #if c == ' ': continue
         if i == 0 or c != str_mission[i - 1]:
             s = {'direction': dirs[c], 'steps': 1}
             queue.append(s)
         else:
-            s['step'] += 1
+            s['steps'] += 1
     return queue
 
 def missionStepToKeyFramesObj(frames_step):
@@ -23,7 +25,8 @@ def missionStepToKeyFramesObj(frames_step):
             'forward': 'i',
             'right': 'l',
             'back': 'k',
-            'left': 'j'
+            'left': 'j',
+            'pause': 'p'
         }
         return {
             'key': dirs[stepObj['direction']],

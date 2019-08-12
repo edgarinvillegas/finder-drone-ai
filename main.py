@@ -58,7 +58,7 @@ old_mission = [
 ]
 
 #mission = mission_from_str('fbfb')
-mission = mission_from_str('frbl')
+mission = mission_from_str('fffppbbbppfffppbbb')
 print(mission)
 
 # This transforms the mission in a set of simulated keys to be pressed.
