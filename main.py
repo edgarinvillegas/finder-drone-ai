@@ -5,10 +5,10 @@ import time
 import datetime
 import os
 import argparse
-from collections import deque
+
 from enum import Enum
 from models import FaceDetectionModel, CatDetectionModel
-from utils import missionStepToKeyFramesObj, mission_from_str
+from utils import missionStepToKeyFramesObj, mission_from_str, get_next_auto_key_fn
 
 # standard argparse stuff
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter, add_help=False)
@@ -45,14 +45,6 @@ FPS = 3
 # Frames needed per step
 frames_step = step_size / S * FPS
 
-# operations_queue = deque([
-#     # {'key': 'u', 'frames': 20 * FPS}
-#     {'key': 'i', 'frames': 1 * int(frames_step)},
-#     {'key': 'l', 'frames': 1 * int(frames_step)},
-#     {'key': 'k', 'frames': 1 * int(frames_step)},
-#     {'key': 'j', 'frames': 1 * int(frames_step)}
-# ])
-
 old_mission = [
     {'direction': 'forward', 'steps': 1},
     {'direction': 'right', 'steps': 1},
@@ -65,29 +57,13 @@ old_mission = [
     {'direction': 'left', 'steps': 4},
 ]
 
-mission = mission_from_str('fbfb')
+#mission = mission_from_str('fbfb')
+mission = mission_from_str('frbl')
 print(mission)
 
-operations_queue = deque(map(missionStepToKeyFramesObj(frames_step), mission))
-
-print(operations_queue)
-
-def next_auto_op():
-    oq = operations_queue
-    if len(oq) > 0:
-        op = oq[0]
-        op['frames'] -= 1
-        if op['frames'] <= 0:
-            operations_queue.popleft()
-        yield op
-
-def next_auto_key():
-    try:
-        op = next(next_auto_op())
-        return ord(op['key'])
-    except StopIteration:
-        print('operations_queue is empty')
-        return -1
+# This transforms the mission in a set of simulated keys to be pressed.
+# next_auto_key will be a function that returns the new key to press every time
+next_auto_key = get_next_auto_key_fn(mission, frames_step)
 
 # If we are to save our sessions, we need to make sure the proper directories exist
 if args.save_session:
@@ -201,7 +177,7 @@ class DroneUI(object):
 
             if k == ord('s') and self.send_rc_control == True:
                 self.mode = PMode.SPIRAL
-                DETECT_ENABLED = True   # To start following with spiral
+                # DETECT_ENABLED = True   # To start following with spiral
                 OVERRIDE = False
                 print('Switch to spiral mode')
 
@@ -335,8 +311,6 @@ class DroneUI(object):
         if self.mode == PMode.FOLLOW and not OVERRIDE:
             for det in detections:
                 (x, y, w, h) = det['box']
-                print('w: ', w, 'h: ', h, 'area: ', w*h)
-
                 # setting Object Box properties
                 obCol = (255, 0, 0)  # BGR 0-255
                 obStroke = 2
@@ -422,6 +396,7 @@ def main():
 
     # run frontend
     frontend.run()
+    pass
 
 
 if __name__ == '__main__':
