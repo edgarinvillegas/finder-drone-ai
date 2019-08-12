@@ -8,6 +8,7 @@ import argparse
 from collections import deque
 from enum import Enum
 from models import FaceDetectionModel, CatDetectionModel
+from utils import missionStepToKeyFramesObj, mission_from_str
 
 # standard argparse stuff
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter, add_help=False)
@@ -52,7 +53,7 @@ frames_step = step_size / S * FPS
 #     {'key': 'j', 'frames': 1 * int(frames_step)}
 # ])
 
-steps_queue = [
+old_mission = [
     {'direction': 'forward', 'steps': 1},
     {'direction': 'right', 'steps': 1},
     {'direction': 'back', 'steps': 2},
@@ -64,19 +65,10 @@ steps_queue = [
     {'direction': 'left', 'steps': 4},
 ]
 
-def stepObjToOp(stepObj):
-    dirs = {
-        'forward': 'i',
-        'right': 'l',
-        'back': 'k',
-        'left': 'j'
-    }
-    return {
-        'key': dirs[stepObj['direction']],
-        'frames': int(stepObj['steps'] * frames_step)
-    }
+mission = mission_from_str('fbfb')
+print(mission)
 
-operations_queue = deque(map(stepObjToOp, steps_queue))
+operations_queue = deque(map(missionStepToKeyFramesObj(frames_step), mission))
 
 print(operations_queue)
 
