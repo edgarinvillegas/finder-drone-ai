@@ -63,6 +63,7 @@ steps_queue = [
     {'direction': 'back', 'steps': 4},
     {'direction': 'left', 'steps': 4},
 ]
+
 def stepObjToOp(stepObj):
     dirs = {
         'forward': 'i',
@@ -72,7 +73,7 @@ def stepObjToOp(stepObj):
     }
     return {
         'key': dirs[stepObj['direction']],
-        'frames': stepObj['steps'] * int(frames_step)
+        'frames': int(stepObj['steps'] * frames_step)
     }
 
 operations_queue = deque(map(stepObjToOp, steps_queue))
@@ -106,7 +107,7 @@ if args.save_session:
     ddir = "Sessions/Session {}".format(str(datetime.datetime.now()).replace(':','-').replace('.','_'))
     os.mkdir(ddir)
 
-PMode = Enum('PilotMode', 'NONE SPIRAL FOLLOW FOLLOW_ENABLED')
+PMode = Enum('PilotMode', 'NONE SPIRAL FOLLOW')
 
 class DroneUI(object):
     
@@ -151,7 +152,7 @@ class DroneUI(object):
         imgCount = 0
 
         OVERRIDE = False
-        FOLLOW_ENABLED = False  # Set to true to automatically start in follow mode
+        DETECT_ENABLED = False  # Set to true to automatically start in follow mode
         self.mode = PMode.NONE
 
         # oSpeed = args.override_speed
@@ -208,12 +209,13 @@ class DroneUI(object):
 
             if k == ord('s') and self.send_rc_control == True:
                 self.mode = PMode.SPIRAL
+                DETECT_ENABLED = True   # To start following with spiral
                 OVERRIDE = False
                 print('Switch to spiral mode')
 
             # This is temporary, follow mode should start automatically
             if k == ord('f') and self.send_rc_control == True:
-                FOLLOW_ENABLED = True
+                DETECT_ENABLED = True
                 OVERRIDE = False
                 print('Switch to follow mode')
 
@@ -263,7 +265,7 @@ class DroneUI(object):
             tDistance = 3
 
             dCol = (0, 255, 255)
-            if not OVERRIDE and self.send_rc_control and FOLLOW_ENABLED:
+            if not OVERRIDE and self.send_rc_control and DETECT_ENABLED:
                 dCol = self.track_object(OVERRIDE, frameRet, szX, szY, tDistance)
 
             if OVERRIDE:
