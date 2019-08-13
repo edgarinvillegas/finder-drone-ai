@@ -28,9 +28,12 @@ def missionStepToKeyFramesObj(frames_step):
             'left': 'j',
             'pause': 'p'
         }
+        dir = stepObj['direction']
+        frames = stepObj['steps'] * frames_step
+        if dir == 'back': frames *= 1
         return {
-            'key': dirs[stepObj['direction']],
-            'frames': int(stepObj['steps'] * frames_step)
+            'key': dirs[dir],
+            'frames': int(frames)
         }
     return stepObjToOpForMap
 
