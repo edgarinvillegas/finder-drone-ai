@@ -10,6 +10,7 @@ import imutils
 from enum import Enum
 from models import FaceDetectionModel, CatDetectionModel
 from utils import missionStepToKeyFramesObj, mission_from_str, get_next_auto_key_fn
+from utils import get_squares_coords
 
 # standard argparse stuff
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter, add_help=False)
@@ -41,7 +42,7 @@ S2 = 5
 #acc = [500,250,250,150,110,70,50]
 
 # Frames per second of the window display
-FPS = 3
+FPS = 3  # 3 is appropiate
 
 # Frames needed per step
 frames_step = step_size / S * FPS
@@ -59,8 +60,8 @@ old_mission = [
 ]
 
 #mission = mission_from_str('fbfb')
-#mission = mission_from_str('fff-bbb-fff-bbb')
-mission = mission_from_str('ff-l-bb-r')
+#mission = mission_from_str('fff-bbb-ffgf-bbb')
+mission = mission_from_str('ffff-bbbb')
 print(mission)
 
 
@@ -79,61 +80,6 @@ if args.save_session:
     os.mkdir(ddir)
 
 PMode = Enum('PilotMode', 'NONE SPIRAL FOLLOW')
-
-def get_squares_coords(frame):
-    # convert the frame to grayscale, blur it, and detect edges
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    blurred = cv2.GaussianBlur(gray, (7, 7), 0)
-    edged = cv2.Canny(blurred, 50, 150)
-
-    # find contours in the edge map
-    cnts = cv2.findContours(edged.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    cnts = imutils.grab_contours(cnts)
-
-    square_coords = list()
-    # loop over the contours
-    for c in cnts:
-        # approximate the contour
-        peri = cv2.arcLength(c, True)
-        approx = cv2.approxPolyDP(c, 0.01 * peri, True)
-
-        # ensure that the approximated contour is "roughly" rectangular
-        if len(approx) >= 4 and len(approx) <= 6:
-            # compute the bounding box of the approximated contour and
-            # use the bounding box to compute the aspect ratio
-            (x, y, w, h) = cv2.boundingRect(approx)
-            aspectRatio = w / float(h)
-
-            # compute the solidity of the original contour
-            area = cv2.contourArea(c)
-            hullArea = cv2.contourArea(cv2.convexHull(c))
-            solidity = area / float(hullArea)
-
-            # compute whether or not the width and height, solidity, and
-            # aspect ratio of the contour falls within appropriate bounds
-            keepDims = w > 25 and h > 25
-            keepSolidity = solidity > 0.9
-            keepAspectRatio = aspectRatio >= 0.8 and aspectRatio <= 1.2
-            # print('size: ({}, {})'.format(w, h), 'solidity: ', solidity, 'aspectRatio: ', aspectRatio)
-
-            # ensure that the contour passes all our tests
-            if keepDims and keepSolidity and keepAspectRatio:
-                # draw an outline around the target and update the status
-                # text
-                cv2.drawContours(frame, [approx], -1, (0, 0, 255), 4)
-
-
-                # compute the center of the contour region and draw the
-                # crosshairs
-                M = cv2.moments(approx)
-                (cX, cY) = (int(M["m10"] // M["m00"]), int(M["m01"] // M["m00"]))
-                (startX, endX) = (int(cX - (w * 0.15)), int(cX + (w * 0.15)))
-                (startY, endY) = (int(cY - (h * 0.15)), int(cY + (h * 0.15)))
-                cv2.line(frame, (startX, cY), (endX, cY), (0, 0, 255), 3)
-                cv2.line(frame, (cX, startY), (cX, endY), (0, 0, 255), 3)
-                square_coords.append((cX, cY))
-
-    return square_coords
 
 class DroneUI(object):
     
@@ -204,6 +150,7 @@ class DroneUI(object):
 
             theTime = str(datetime.datetime.now()).replace(':','-').replace('.','_')
 
+            # TODO: Analize if colors have to be tweaked
             frame = cv2.cvtColor(frame_read.frame, cv2.COLOR_BGR2RGB)
             frameRet = cv2.flip(frame_read.frame, 0)   # Vertical flip due to the mirror
             # frameRet = frame_read.frame
@@ -284,6 +231,10 @@ class DroneUI(object):
                     if autoK == -1:
                         self.mode = PMode.NONE
                     else:
+                        squares_coords = get_squares_coords(frameRet)
+                        if len(squares_coords) > 0:
+                            print('Square detected, cancelling key {}'.format(chr(autoK)))
+                            autoK = ord('p')
                         print('Automatically pressing ', chr(autoK))
 
             key_to_process = autoK if k == -1 and self.mode == PMode.SPIRAL and OVERRIDE == False else k
@@ -308,7 +259,6 @@ class DroneUI(object):
             cv2.putText(frameRet,show,(32,664),cv2.FONT_HERSHEY_SIMPLEX,1,dCol,2)
 
             # Display the resulting frame
-            squares_coords = get_squares_coords(frameRet)
             cv2.imshow(f'Tello Tracking...',frameRet)
 
             frame_time = time.time() - frame_time_start
@@ -356,6 +306,8 @@ class DroneUI(object):
             self.left_right_velocity = -int(S)
         else:
             self.left_right_velocity = 0
+        if k == ord('p'):
+            print('pressing p')
 
     def track_object(self, OVERRIDE, frameRet, szX, szY, tDistance):
         detections = self.model.detect(frameRet)
