@@ -1,0 +1,1 @@
+ffmpeg -framerate 10 -i tellocap%%d.jpg -c:v libx264 -pix_fmt yuv420p -crf 23 output.mp4

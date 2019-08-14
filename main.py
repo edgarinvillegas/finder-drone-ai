@@ -10,7 +10,8 @@ import imutils
 from enum import Enum
 from models import FaceDetectionModel, CatDetectionModel
 from utils import missionStepToKeyFramesObj, mission_from_str, get_next_auto_key_fn
-from utils import get_squares_coords, should_block_boundaries
+# from utils import get_squares_coords, should_block_boundaries
+from utils import get_squares_push_directions
 
 # standard argparse stuff
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter, add_help=False)
@@ -61,7 +62,8 @@ old_mission = [
 
 #mission = mission_from_str('fbfb')
 #mission = mission_from_str('fff-bbb-ffgf-bbb')
-mission = mission_from_str('ffff-bbbb')
+#mission = mission_from_str('ffff-bbbb')
+mission = mission_from_str('fffrr')
 print(mission)
 
 
@@ -82,24 +84,28 @@ if args.save_session:
 PMode = Enum('PilotMode', 'NONE SPIRAL FOLLOW')
 
 # It gets the next simulated key from queue that is not blocked by a square
-def next_auto_unblocked_key(frameRet):
-    autoK = next_auto_key()
-    if autoK != -1:
-        block_right, block_forward, block_left, block_back = should_block_boundaries(frameRet)
-        # Check the cases where we have to block
-        if autoK == ord('l') and block_right:
-            print("Bouncing key l to j because there's a block to the right")
-            autoK = ord('j')
-        if autoK == ord('i') and block_forward:
-            print("Bouncing key i to k because there's a block forward")
-            autoK = ord('k')
-        if autoK == ord('j') and block_left:
-            print("Bouncing key j to l because there's a block to the left")
-            autoK = ord('l')
-        if autoK == ord('k') and block_back:
-            print("Bouncing key k to i because there's a block backward")
-            autoK = ord('i')
-    return autoK
+# def next_auto_unblocked_key(frameRet):
+#     autoK = next_auto_key()
+#     if autoK != -1:
+#         block_right, block_forward, block_left, block_back = should_block_boundaries(frameRet)
+#         if block_right + block_forward + block_left + block_back > 0:
+#             print('Square found, going backwards')
+#             return ord('k')
+#
+#         # Check the cases where we have to block
+#         if autoK == ord('l') and block_right:
+#             print("Bouncing key l to j because there's a block to the right")
+#             autoK = ord('j')
+#         if autoK == ord('i') and block_forward:
+#             print("Bouncing key i to k because there's a block forward")
+#             autoK = ord('k')
+#         if autoK == ord('j') and block_left:
+#             print("Bouncing key j to l because there's a block to the left")
+#             autoK = ord('l')
+#         if autoK == ord('k') and block_back:
+#             print("Bouncing key k to i because there's a block backward")
+#             autoK = ord('i')
+#     return autoK
 
 class DroneUI(object):
     
@@ -162,14 +168,17 @@ class DroneUI(object):
 
         while not should_stop:
             frame_time_start = time.time()
-            self.update()
+            # self.update() # Moved to the end before sleep to have more accuracy
 
             if frame_read.stopped:
                 frame_read.stop()
+                self.update() ## Just in case
                 break
+
 
             theTime = str(datetime.datetime.now()).replace(':','-').replace('.','_')
 
+            print('---')
             # TODO: Analize if colors have to be tweaked
             frame = cv2.cvtColor(frame_read.frame, cv2.COLOR_BGR2RGB)
             frameRet = cv2.flip(frame_read.frame, 0)   # Vertical flip due to the mirror
@@ -239,12 +248,13 @@ class DroneUI(object):
             # Quit the software
             if k == 27:
                 should_stop = True
+                self.update()  ## Just in case
                 break
 
             autoK = -1
             if k == -1 and self.mode == PMode.SPIRAL:
                 if not OVERRIDE:
-                    autoK = next_auto_unblocked_key(frameRet)
+                    autoK = next_auto_key()
                     if autoK == -1:
                         self.mode = PMode.NONE
                         print('Queue empty! no more autokeys')
@@ -252,7 +262,12 @@ class DroneUI(object):
                         print('Automatically pressing ', chr(autoK))
 
             key_to_process = autoK if k == -1 and self.mode == PMode.SPIRAL and OVERRIDE == False else k
-            self.process_move_key(key_to_process)
+
+            if self.mode == PMode.SPIRAL and not OVERRIDE:
+                #frame ret will get the squares drawn after this operation
+                self.process_move_key_andor_square_bounce(key_to_process, frameRet)
+            else:
+                self.process_move_key(key_to_process)
 
             tDistance = 3
 
@@ -274,6 +289,7 @@ class DroneUI(object):
 
             # Display the resulting frame
             cv2.imshow(f'Tello Tracking...',frameRet)
+            self.update()  # Moved here instead of beginning of loop to have better accuracy
 
             frame_time = time.time() - frame_time_start
             sleep_time = 1 / FPS - frame_time
@@ -295,35 +311,53 @@ class DroneUI(object):
         # Call it always before finishing. I deallocate resources.
         self.tello.end()
 
+    def process_move_key_andor_square_bounce(self, k, frameRet):
+        self.process_move_key(k)  # By default use key direction
+        (hor_dir, ver_dir) = get_squares_push_directions(frameRet)
+        print('(hor_dir, ver_dir): ({}, {})'.format(hor_dir, ver_dir))
+        if ver_dir == 'forward':
+            self.for_back_velocity = int(S)
+            if k != ord('i'): print('Square pushing forward')
+        elif ver_dir == 'back':
+            self.for_back_velocity = -int(S)
+            if k != ord('k'): print('Square pushing back')
+        if hor_dir == 'right':
+            self.left_right_velocity = int(S)
+            if k != ord('l'): print('Square pushing right')
+        elif hor_dir == 'left':
+            self.left_right_velocity = -int(S)
+            if k != ord('j'): print('Square pushing left')
+
     def process_move_key(self, k):
-        # S & W to fly forward & back
+        # i & k to fly forward & back
         if k == ord('i'):
             self.for_back_velocity = int(S)
         elif k == ord('k'):
             self.for_back_velocity = -int(S)
         else:
             self.for_back_velocity = 0
-        # a & d to pan left & right
+        # o & u to pan left & right
         if k == ord('o'):
             self.yaw_velocity = int(S)
         elif k == ord('u'):
             self.yaw_velocity = -int(S)
         else:
             self.yaw_velocity = 0
-        # Q & E to fly up & down
+        # y & h to fly up & down
         if k == ord('y'):
             self.up_down_velocity = int(S)
         elif k == ord('h'):
             self.up_down_velocity = -int(S)
         else:
             self.up_down_velocity = 0
-        # c & z to fly left & right
+        # l & j to fly left & right
         if k == ord('l'):
             self.left_right_velocity = int(S)
         elif k == ord('j'):
             self.left_right_velocity = -int(S)
         else:
             self.left_right_velocity = 0
+        # p to keep still
         if k == ord('p'):
             print('pressing p')
 
@@ -412,6 +446,7 @@ class DroneUI(object):
     def update(self):
         """ Update routine. Send velocities to Tello."""
         if self.send_rc_control:
+            print('Sending speeds to tello: {} {}'.format(self.left_right_velocity, self.for_back_velocity) )
             self.tello.send_rc_control(self.left_right_velocity, self.for_back_velocity, self.up_down_velocity,
                                        self.yaw_velocity)
 

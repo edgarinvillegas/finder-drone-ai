@@ -64,9 +64,9 @@ def should_block_boundaries(frameRet):
     (h, w) = frameRet.shape[:2]
     block_right, block_forward, block_left, block_back = (False, False, False, False)
     # percentage of width to have on left and right boundaries to detect squares. Max 0.5
-    w_perc = 0.4
+    w_perc = 0.5
     # percentage of height to have on top and bottom boundaries to detect squares. Max 0.5
-    h_perc = 0.4
+    h_perc = 0.5
     for x, y in squares_coords:
         print('Square found on ({}, {})'.format(x, y))
         # Square to the left, block j
