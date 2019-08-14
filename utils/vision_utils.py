@@ -55,3 +55,37 @@ def get_squares_coords(frame):
                 square_coords.append((cX, cY))
 
     return square_coords
+
+# Checks if there are squares in the boundaries
+# @param frameRet the drone frame
+# Returns Clockwise tuple of booleans, true if it should be blocked
+def should_block_boundaries(frameRet):
+    squares_coords = get_squares_coords(frameRet)
+    (h, w) = frameRet.shape[:2]
+    block_right, block_forward, block_left, block_back = (False, False, False, False)
+    # percentage of width to have on left and right boundaries to detect squares. Max 0.5
+    w_perc = 0.4
+    # percentage of height to have on top and bottom boundaries to detect squares. Max 0.5
+    h_perc = 0.4
+    for x, y in squares_coords:
+        print('Square found on ({}, {})'.format(x, y))
+        # Square to the left, block j
+        if x < w * w_perc:
+            #print('Square detected to the left, cancelling key {}'.format(chr(autoK)))
+            block_left = True
+        # Square to the right, block l
+        if x > (w - w * w_perc):
+            block_right = True
+        # Square forward, block i
+        if y < h * (h_perc):
+            block_forward = True
+        # Square back, block k
+        if y > (h - h * h_perc):
+            block_back = True
+
+    if block_right: print('Must block right')
+    if block_forward: print('Must block forward')
+    if block_left: print('Must block left')
+    if block_back: print('Must block back')
+
+    return (block_right, block_forward, block_left, block_back)

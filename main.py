@@ -10,7 +10,7 @@ import imutils
 from enum import Enum
 from models import FaceDetectionModel, CatDetectionModel
 from utils import missionStepToKeyFramesObj, mission_from_str, get_next_auto_key_fn
-from utils import get_squares_coords
+from utils import get_squares_coords, should_block_boundaries
 
 # standard argparse stuff
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter, add_help=False)
@@ -80,6 +80,26 @@ if args.save_session:
     os.mkdir(ddir)
 
 PMode = Enum('PilotMode', 'NONE SPIRAL FOLLOW')
+
+# It gets the next simulated key from queue that is not blocked by a square
+def next_auto_unblocked_key(frameRet):
+    autoK = next_auto_key()
+    if autoK != -1:
+        block_right, block_forward, block_left, block_back = should_block_boundaries(frameRet)
+        # Check the cases where we have to block
+        if autoK == ord('l') and block_right:
+            print("Bouncing key l to j because there's a block to the right")
+            autoK = ord('j')
+        if autoK == ord('i') and block_forward:
+            print("Bouncing key i to k because there's a block forward")
+            autoK = ord('k')
+        if autoK == ord('j') and block_left:
+            print("Bouncing key j to l because there's a block to the left")
+            autoK = ord('l')
+        if autoK == ord('k') and block_back:
+            print("Bouncing key k to i because there's a block backward")
+            autoK = ord('i')
+    return autoK
 
 class DroneUI(object):
     
@@ -156,9 +176,6 @@ class DroneUI(object):
             # frameRet = frame_read.frame
 
             vid = self.tello.get_video_capture()
-
-            if args.save_session:
-                cv2.imwrite("{}/tellocap{}.jpg".format(ddir,imgCount),frameRet)
             
             frame = np.rot90(frame)
             imgCount+=1
@@ -227,14 +244,11 @@ class DroneUI(object):
             autoK = -1
             if k == -1 and self.mode == PMode.SPIRAL:
                 if not OVERRIDE:
-                    autoK = next_auto_key()
+                    autoK = next_auto_unblocked_key(frameRet)
                     if autoK == -1:
                         self.mode = PMode.NONE
+                        print('Queue empty! no more autokeys')
                     else:
-                        squares_coords = get_squares_coords(frameRet)
-                        if len(squares_coords) > 0:
-                            print('Square detected, cancelling key {}'.format(chr(autoK)))
-                            autoK = ord('p')
                         print('Automatically pressing ', chr(autoK))
 
             key_to_process = autoK if k == -1 and self.mode == PMode.SPIRAL and OVERRIDE == False else k
@@ -266,6 +280,10 @@ class DroneUI(object):
             if sleep_time < 0:
                 sleep_time = 0
                 print('SLEEEP TIME NEGATIVE FOR FRAME {} ({}s).. TURNING IT 0'.format(imgCount, frame_time))
+            if args.save_session:
+                output_filename = "{}/tellocap{}.jpg".format(ddir,imgCount)
+                print('Created {}'.format(output_filename))
+                cv2.imwrite(output_filename, frameRet)
             time.sleep(sleep_time)
 
         # On exit, print the battery
