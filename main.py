@@ -6,6 +6,7 @@ import datetime
 import os
 import argparse
 import imutils
+import globals.mission
 
 from enum import Enum
 from models import FaceDetectionModel, CatDetectionModel
@@ -63,7 +64,7 @@ old_mission = [
 #mission = mission_from_str('fbfb')
 #mission = mission_from_str('fff-bbb-ffgf-bbb')
 #mission = mission_from_str('ffff-bbbb')
-mission = mission_from_str('fffrr')
+mission = mission_from_str('fffffrrrrrllllbbb')
 print(mission)
 
 
@@ -311,22 +312,46 @@ class DroneUI(object):
         # Call it always before finishing. I deallocate resources.
         self.tello.end()
 
+    def oq_discard_keys(self, keys_to_pop):
+        oq = globals.mission.operations_queue
+        while len(oq) > 0:
+            oqkey = oq[0]['key']
+            if oqkey in keys_to_pop:
+                print('Removing {} from queue'.format(oqkey))
+                oq.popleft()
+            else:
+                break
+
     def process_move_key_andor_square_bounce(self, k, frameRet):
         self.process_move_key(k)  # By default use key direction
         (hor_dir, ver_dir) = get_squares_push_directions(frameRet)
         print('(hor_dir, ver_dir): ({}, {})'.format(hor_dir, ver_dir))
+        oq = globals.mission.operations_queue
+        print('operations_queue len: ', len(oq))
+        keys_to_pop = ''
         if ver_dir == 'forward':
             self.for_back_velocity = int(S)
             if k != ord('i'): print('Square pushing forward')
+            keys_to_pop += 'k'
         elif ver_dir == 'back':
             self.for_back_velocity = -int(S)
             if k != ord('k'): print('Square pushing back')
+            keys_to_pop += 'i'
         if hor_dir == 'right':
             self.left_right_velocity = int(S)
             if k != ord('l'): print('Square pushing right')
+            keys_to_pop += 'j'
         elif hor_dir == 'left':
             self.left_right_velocity = -int(S)
             if k != ord('j'): print('Square pushing left')
+            keys_to_pop += 'l'
+        if(len(keys_to_pop) > 0):
+            self.oq_discard_keys(keys_to_pop)
+        # operations_queue looks like:
+        # [
+        #   {'key': 'j', frames: 30},
+        #   {'key': 'i', frames: 18},
+        # ]
 
     def process_move_key(self, k):
         # i & k to fly forward & back

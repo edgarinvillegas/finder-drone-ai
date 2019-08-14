@@ -1,4 +1,6 @@
 from collections import deque
+# from globals.mission import operations_queue
+import globals.mission
 
 def mission_from_str(str_mission):
     queue = list()
@@ -40,8 +42,14 @@ def missionStepToKeyFramesObj(frames_step):
 # This transforms the mission in a set of simulated keys to be pressed
 # @returns a function that returns the new key to press every time it's called
 def get_next_auto_key_fn(mission, frames_step):
-    # global operations_queue
-    operations_queue = deque(map(missionStepToKeyFramesObj(frames_step), mission))
+    # operations_queue looks like:
+    # [
+    #   {key: 'j', frames: 30},
+    #   {key: 'i', frames: 18},
+    # ]
+    globals.mission.operations_queue = deque(map(missionStepToKeyFramesObj(frames_step), mission))
+    operations_queue = globals.mission.operations_queue
+
     print(operations_queue)
 
     def next_auto_op():
