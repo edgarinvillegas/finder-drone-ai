@@ -64,7 +64,9 @@ old_mission = [
 #mission = mission_from_str('fbfb')
 #mission = mission_from_str('fff-bbb-ffgf-bbb')
 #mission = mission_from_str('ffff-bbbb')
-mission = mission_from_str('fffffrrrrrllllbbb')
+#mission = mission_from_str('fffff-rrrrr-ll-llbbb-fffff-rrrrr-ll-llbbb-')
+#mission = mission_from_str('-frlllr-b--llrrbrfll--ffr--fbf-rrf-r-l-rb--b-r-b-l')
+mission = mission_from_str('fffff-l-bbbb-l-fffff-l-bbbb-l-fffff-l-bbbb-l-fffff-l-bbbb-l-fffff-l-bbbb')
 print(mission)
 
 
@@ -314,6 +316,7 @@ class DroneUI(object):
 
     def oq_discard_keys(self, keys_to_pop):
         oq = globals.mission.operations_queue
+        keys_to_pop += 'p'
         while len(oq) > 0:
             oqkey = oq[0]['key']
             if oqkey in keys_to_pop:
@@ -347,6 +350,13 @@ class DroneUI(object):
             keys_to_pop += 'l'
         if(len(keys_to_pop) > 0):
             self.oq_discard_keys(keys_to_pop)
+
+        if(len(oq) == 0):
+            print("Landing")
+            self.tello.land()
+            self.send_rc_control = False
+            self.mode = PMode.NONE
+
         # operations_queue looks like:
         # [
         #   {'key': 'j', frames: 30},

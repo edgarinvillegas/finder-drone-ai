@@ -61,7 +61,7 @@ def get_spot_coords(frame):
         approx = cv2.approxPolyDP(c, 0.01 * peri, True)
 
         # ensure that the approximated contour is "roughly" rectangular
-        if True: #or len(approx) >= 4 and len(approx) <= 7:
+        if len(approx) >= 4: # and len(approx) <= 7:
             # compute the bounding box of the approximated contour and
             # use the bounding box to compute the aspect ratio
             (x, y, w, h) = cv2.boundingRect(approx)
@@ -70,7 +70,11 @@ def get_spot_coords(frame):
             # compute the solidity of the original contour
             area = cv2.contourArea(c)
             hullArea = cv2.contourArea(cv2.convexHull(c))
-            solidity = area / float(hullArea)
+            # Because I've got a division by 0 somehow
+            try:
+                solidity = area / float(hullArea)
+            except:
+                solidity = 0
 
             # compute whether or not the width and height, solidity, and
             # aspect ratio of the contour falls within appropriate bounds
