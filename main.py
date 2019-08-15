@@ -66,7 +66,8 @@ old_mission = [
 #mission = mission_from_str('ffff-bbbb')
 #mission = mission_from_str('fffff-rrrrr-ll-llbbb-fffff-rrrrr-ll-llbbb-')
 #mission = mission_from_str('-frlllr-b--llrrbrfll--ffr--fbf-rrf-r-l-rb--b-r-b-l')
-mission = mission_from_str('fffff-l-bbbb-l-fffff-l-bbbb-l-fffff-l-bbbb-l-fffff-l-bbbb-l-fffff-l-bbbb')
+#mission = mission_from_str('fffff-l-bbbb-l-fffff-l-bbbb-l-fffff-l-bbbb-l-fffff-l-bbbb-l-fffff-l-bbbb')
+mission = mission_from_str('fffff-l-bbbbb-l-fffff-l-bbbbb-l-fffff-l-bbbbb-l-fffff-l-bbbbb-l-fffff-l-bbbbb-l-fffff-l-bbbbb-l-fffff-l-bbbbb-l-fffff-l-bbbbb-l-fffff-l-bbbbb-l-fffff-l-bbbbb')
 print(mission)
 
 
@@ -212,7 +213,7 @@ class DroneUI(object):
 
             if k == ord('s') and self.send_rc_control == True:
                 self.mode = PMode.SPIRAL
-                # DETECT_ENABLED = True   # To start following with spiral
+                DETECT_ENABLED = True   # To start following with spiral
                 OVERRIDE = False
                 print('Switch to spiral mode')
 
@@ -224,11 +225,9 @@ class DroneUI(object):
 
             # Press L to land
             if k == ord('g'):
-                if not args.debug:
-                    print("Landing")
-                    self.tello.land()
-                self.send_rc_control = False
-                self.mode = PMode.NONE  # TODO: Consider calling reset
+                self.land_and_set_none()
+                self.update()  ## Just in case
+                break
 
             # Press Backspace for controls override
             if k == 8:
@@ -268,7 +267,11 @@ class DroneUI(object):
 
             if self.mode == PMode.SPIRAL and not OVERRIDE:
                 #frame ret will get the squares drawn after this operation
-                self.process_move_key_andor_square_bounce(key_to_process, frameRet)
+                if self.process_move_key_andor_square_bounce(key_to_process, frameRet) == False:
+                    # If the queue is empty and the object hasn't been found, land and finish
+                    self.land_and_set_none()
+                    self.update()  # Just in case
+                    break
             else:
                 self.process_move_key(key_to_process)
 
@@ -314,6 +317,14 @@ class DroneUI(object):
         # Call it always before finishing. I deallocate resources.
         self.tello.end()
 
+    def land_and_set_none(self):
+        if not args.debug:
+            print("Landing")
+            self.tello.land()
+        self.send_rc_control = False
+        self.mode = PMode.NONE  # TODO: Consider calling reset
+
+
     def oq_discard_keys(self, keys_to_pop):
         oq = globals.mission.operations_queue
         keys_to_pop += 'p'
@@ -351,11 +362,7 @@ class DroneUI(object):
         if(len(keys_to_pop) > 0):
             self.oq_discard_keys(keys_to_pop)
 
-        if(len(oq) == 0):
-            print("Landing")
-            self.tello.land()
-            self.send_rc_control = False
-            self.mode = PMode.NONE
+        return (len(oq) > 0)
 
         # operations_queue looks like:
         # [
@@ -396,6 +403,18 @@ class DroneUI(object):
         if k == ord('p'):
             print('pressing p')
 
+    def on_object_detected_first_time(self, frameRet, firstDetection):
+        output_filename_det_full = "{}/detected_full.jpg".format(ddir)
+        cv2.imwrite(output_filename_det_full, frameRet)
+        print('Created {}'.format(output_filename_det_full))
+        (x, y, w, h) = firstDetection['box']
+        subframe = frameRet[y:y+h, x:x+w]
+        output_filename_det_sub = "{}/detected_sub.jpg".format(ddir)
+        cv2.imwrite(output_filename_det_sub, frameRet)
+        print('Created {}'.format(output_filename_det_sub))
+        cv2.imshow('Detected', subframe)
+        cv2.waitKey(0)
+
     def track_object(self, OVERRIDE, frameRet, szX, szY, tDistance):
         detections = self.model.detect(frameRet)
         # These are our center dimensions
@@ -404,10 +423,15 @@ class DroneUI(object):
         cHeight = int(frame_h / 2)
         noDetections = len(detections) == 0
         if len(detections) > 0:
+            print('CAT FOUND!!!!!!!!!!')
+            if self.mode != PMode.FOLLOW:  # To create it only the first time
+                self.on_object_detected_first_time(frameRet, detections[0])
+
             self.mode = PMode.FOLLOW
         # if we've given rc controls & get object coords returned
         #if self.send_rc_control and not OVERRIDE:
         if self.mode == PMode.FOLLOW and not OVERRIDE:
+            print('Following...')
             for det in detections:
                 (x, y, w, h) = det['box']
                 # setting Object Box properties
@@ -431,25 +455,23 @@ class DroneUI(object):
                 vTarget = np.array((targ_cord_x, targ_cord_y))
                 vDistance = vTrue - vTarget
 
-                #
                 if not args.debug:
-                    # for turning
                     if vDistance[0] < -szX:
-                        self.yaw_velocity = S
-                        # self.left_right_velocity = S2
+                        # Right
+                        self.left_right_velocity = S
                     elif vDistance[0] > szX:
-                        self.yaw_velocity = -S
-                        # self.left_right_velocity = -S2
+                        # Left
+                        self.left_right_velocity = -S
                     else:
-                        self.yaw_velocity = 0
+                        self.left_right_velocity = 0
 
                     # for up & down
                     if vDistance[1] > szY:
-                        self.up_down_velocity = S
+                        self.for_back_velocity = S
                     elif vDistance[1] < -szY:
-                        self.up_down_velocity = -S
+                        self.for_back_velocity = -S
                     else:
-                        self.up_down_velocity = 0
+                        self.for_back_velocity = 0
 
                 # Draw the object bounding box
                 cv2.rectangle(frameRet, (x, y), (end_cord_x, end_cord_y), obCol, obStroke)
@@ -466,10 +488,7 @@ class DroneUI(object):
 
             # if there are no objects detected, don't do anything
             if noDetections:
-                self.yaw_velocity = 0
-                self.up_down_velocity = 0
-                self.for_back_velocity = 0
-                print("NO TARGET")
+                print("CAT NOT DETECTED NOW")
         # Draw the center of screen circle, this is what the drone tries to match with the target coords
         cv2.circle(frameRet, (cWidth, cHeight), 10, (0, 0, 255), 2)
         dCol = lerp(np.array((0, 0, 255)), np.array((255, 255, 255)), tDistance + 1 / 7)

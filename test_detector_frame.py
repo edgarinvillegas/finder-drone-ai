@@ -22,7 +22,8 @@ model = CatDetectionModel(0.5)
 # frame = cv2.imread('images/TelloPhoto/juanis-noche-3.png')
 ## frame = cv2.imread('images/juanis-noche-3-rect.png')         #GRAVE!!
 # frame = cv2.imread('images/cat-above-2.jpg')
-frame = cv2.imread('images/lily-juanis-jardin-frame.png')
+#frame = cv2.imread('images/lily-juanis-jardin-frame.png')
+frame = cv2.imread('images/false-positive-6perc.jpg')
 
 frame = cv2.GaussianBlur(frame, (11, 11), 0)
 

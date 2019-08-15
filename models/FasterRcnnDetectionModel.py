@@ -95,10 +95,10 @@ class FasterRcnnDetectionModel(BaseDetectionModel):  #LABELS
             classID = pred_classes[i]
             startX, startY = int(pred_box[0][0]), int(pred_box[0][1])
             endX, endY = pred_box[1][0], pred_box[1][1]
-
-            detections.append({
-                'box': [startX, startY, int(endX - startX), int(endY - startY)],
-                'confidence': float(confidence),
-                'classID': classID
-            })
+            if confidence > self.confidence:  # Added because I got a detection with 6% confidence
+                detections.append({
+                    'box': [startX, startY, int(endX - startX), int(endY - startY)],
+                    'confidence': float(confidence),
+                    'classID': classID
+                })
         return detections
