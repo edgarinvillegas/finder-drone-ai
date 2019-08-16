@@ -87,9 +87,8 @@ if args.save_session:
     os.mkdir(ddir)
 
 PMode = Enum('PilotMode', 'NONE FIND FOLLOW FLIP')
-#OnFoundAction = Enum('OnFoundAction', 'FLIP FOLLOW')
 
-onFoundAction = PMode.FOLLOW
+onFoundAction = PMode.FLIP  # Can be FOLLOW or FLIP
 
 class DroneUI(object):
     
@@ -249,7 +248,7 @@ class DroneUI(object):
             if not OVERRIDE and self.send_rc_control and DETECT_ENABLED:
                 self.track_object(OVERRIDE, frameRet, szX, szY)
 
-            show = "".format(PMode.NONE)
+            show = ""
             if OVERRIDE:
                 show = "MANUAL"
                 dCol = (255,255,255)
@@ -261,14 +260,14 @@ class DroneUI(object):
             mode_label = 'Mode: {}'.format(self.mode)
 
             # Draw the distance choosen
-            cv2.putText(frameRet, mode_label, (32, 600), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
-            cv2.putText(frameRet, show, (32,664), cv2.FONT_HERSHEY_SIMPLEX, 1, dCol, 2)
+            cv2.putText(frameRet, mode_label, (32, 664), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+            cv2.putText(frameRet, show, (32,600), cv2.FONT_HERSHEY_SIMPLEX, 1, dCol, 2)
 
             # Display the resulting frame
             cv2.imshow('FINDER DRONE', frameRet)
             if (self.mode == PMode.FLIP):
                 self.flip()
-                OVERRIDE = True
+                # OVERRIDE = True
 
             self.update()  # Moved here instead of beginning of loop to have better accuracy
 
@@ -296,9 +295,15 @@ class DroneUI(object):
 
     def flip(self):
         print('Flip!')
+        self.left_right_velocity = self.for_back_velocity = 0
+        self.update()
+        time.sleep(self.tello.TIME_BTW_COMMANDS)
         self.tello.flip_left()
-        self.tello.flip_right()
-        self.left_right_velocity = self.up_down_velocity = 0
+        #self.tello.flip_right()
+        # The following 2 lines allow going back to follow mode
+        self.mode = PMode.FOLLOW
+        global onFoundAction
+        onFoundAction = PMode.FOLLOW # So it doesn't flip over and over
 
     def land_and_set_none(self):
         if not args.debug:
