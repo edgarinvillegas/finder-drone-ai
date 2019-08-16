@@ -21,9 +21,9 @@ parser.add_argument('-h', '--help', action='help', default=argparse.SUPPRESS,
                     help='** = required')
 parser.add_argument('-d', '--distance', type=int, default=3,
     help='use -d to change the distance of the drone. Range 0-6')
-parser.add_argument('-sx', '--saftey_x', type=int, default=100,
+parser.add_argument('-sx', '--saftey_x', type=int, default=200,
     help='use -sx to change the saftey bound on the x axis . Range 0-480')
-parser.add_argument('-sy', '--saftey_y', type=int, default=100,
+parser.add_argument('-sy', '--saftey_y', type=int, default=200,
     help='use -sy to change the saftey bound on the y axis . Range 0-360')
 parser.add_argument('-ss', "--save_session", action='store_true',
     help='add the -ss flag to save your session as an image sequence in the Sessions folder')
@@ -62,14 +62,9 @@ old_mission = [
     {'direction': 'left', 'steps': 4},
 ]
 
-#mission = mission_from_str('fbfb')
-#mission = mission_from_str('fff-bbb-ffgf-bbb')
-#mission = mission_from_str('ffff-bbbb')
-#mission = mission_from_str('fffff-rrrrr-ll-llbbb-fffff-rrrrr-ll-llbbb-')
-#mission = mission_from_str('-frlllr-b--llrrbrfll--ffr--fbf-rrf-r-l-rb--b-r-b-l')
 #mission = mission_from_str('fffff-l-bbbb-l-fffff-l-bbbb-l-fffff-l-bbbb-l-fffff-l-bbbb-l-fffff-l-bbbb')
 mission = mission_from_str('fffff-l-bbbbb-l-fffff-l-bbbbb-l-fffff-l-bbbbb-l-fffff-l-bbbbb-l-fffff-l-bbbbb-l-fffff-l-bbbbb-l-fffff-l-bbbbb-l-fffff-l-bbbbb-l-fffff-l-bbbbb-l-fffff-l-bbbbb')
-print(mission)
+print('Mission: ', mission)
 
 
 # This transforms the mission in a set of simulated keys to be pressed.
@@ -396,7 +391,7 @@ class DroneUI(object):
         if k == ord('p'):
             print('pressing p')
 
-    def save_detection(self, frame, frameRet, firstDetection):
+    def show_save_detection(self, frame, frameRet, firstDetection):
         output_filename_det_full = "{}/detected_full.jpg".format(ddir)
         cv2.imwrite(output_filename_det_full, frameRet)
         print('Created {}'.format(output_filename_det_full))
@@ -405,14 +400,18 @@ class DroneUI(object):
         (xt, yt) = (x + w + add_to_borders, y + h + add_to_borders)
         (x, y) = (max(0, x - add_to_borders), max(0, y - add_to_borders))
 
-        subframe = frameRet[y:yt, x:xt].copy()
+        # subframeRet = frameRet[y:yt, x:xt].copy()
+        subframe = frame[y:yt, x:xt].copy()
         def show_detection():
             output_filename_det_sub = "{}/detected_sub.jpg".format(ddir)
             cv2.imwrite(output_filename_det_sub, subframe)
             print('Created {}'.format(output_filename_det_sub))
+            # Shows detection in a window. If it doesn't exist yet, waitKey
+            waitForKey = cv2.getWindowProperty('Detected', 0) < 0  # True for first time
             cv2.imshow('Detected', subframe)
-            cv2.waitKey(0)
-        Timer(1.0, show_detection).start()
+            if waitForKey: cv2.waitKey(0)
+
+        Timer(0.5, show_detection).start()
 
     def track_object(self, OVERRIDE, frame, frameRet, szX, szY):
         detections = self.model.detect(frameRet)
@@ -422,21 +421,29 @@ class DroneUI(object):
         cHeight = int(frame_h / 2)
         thereAreDetections = len(detections) > 0
 
+        if thereAreDetections:
+            print('CAT FOUND!!!!!!!!!!')
+            #if self.mode != onFoundAction:  # To create it only the first time
+            self.mode = onFoundAction
+
         # if we've given rc controls & get object coords returned
         #if self.send_rc_control and not OVERRIDE:
-        if self.mode == PMode.FOLLOW and not OVERRIDE:
-            print('Following...')
-            for det in detections:
-                (x, y, w, h) = det['box']
-                # setting Object Box properties
-                obCol = (255, 0, 0)  # BGR 0-255
-                obStroke = 2
+        print('Following...')
+        for det in detections:
+            (x, y, w, h) = det['box']
+            # setting Object Box properties
+            obCol = (255, 0, 0)  # BGR 0-255
+            obStroke = 2
 
-                # end coords are the end of the bounding box x & y
-                end_cord_x = x + w
-                end_cord_y = y + h
-                end_size = w * 2
+            # end coords are the end of the bounding box x & y
+            end_cord_x = x + w
+            end_cord_y = y + h
+            end_size = w * 2
 
+            # Draw the object bounding box
+            cv2.rectangle(frameRet, (x, y), (end_cord_x, end_cord_y), obCol, obStroke)
+
+            if self.mode == PMode.FOLLOW:
                 # This is not face detection so we don't need offset
                 UDOffset = 0
 
@@ -467,8 +474,8 @@ class DroneUI(object):
                     else:
                         self.for_back_velocity = 0
 
-                # Draw the object bounding box
-                cv2.rectangle(frameRet, (x, y), (end_cord_x, end_cord_y), obCol, obStroke)
+                # Draw the center of screen circle, this is what the drone tries to match with the target coords
+                cv2.circle(frameRet, (cWidth, cHeight), 10, (0, 0, 255), 2)
 
                 # Draw the target as a circle
                 cv2.circle(frameRet, (targ_cord_x, targ_cord_y), 10, (0, 255, 0), 2)
@@ -480,19 +487,13 @@ class DroneUI(object):
                 # Draw the estimated drone vector position in relation to object bounding box
                 cv2.putText(frameRet, str(vDistance), (0, 64), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
 
-            # if there are no objects detected, don't do anything
-            if not thereAreDetections:
-                print("CAT NOT DETECTED NOW")
-        # Draw the center of screen circle, this is what the drone tries to match with the target coords
-        # cv2.circle(frameRet, (cWidth, cHeight), 10, (0, 0, 255), 2)
-
         if thereAreDetections:
-            print('CAT FOUND!!!!!!!!!!')
-            if self.mode != onFoundAction:  # To create it only the first time
-                self.save_detection(frame, frameRet, detections[0])
-            self.mode = onFoundAction
+            self.show_save_detection(frame, frameRet, detections[0])
+        elif self.mode == onFoundAction:
+            # if there are no objects detected, don't do anything
+            print("CAT NOT DETECTED NOW")
 
-        return len(detections) > 0
+        return thereAreDetections
 
     def battery(self):
         return self.tello.get_battery()[:2]
