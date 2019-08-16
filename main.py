@@ -205,7 +205,7 @@ class DroneUI(object):
             if k == ord('g'):
                 self.land_and_set_none()
                 # self.update()  ## Just in case
-                break
+                # break
 
             # Press Backspace for controls override
             if k == 8:
@@ -244,25 +244,25 @@ class DroneUI(object):
             else:
                 self.process_move_key(key_to_process)
 
-            tDistance = 3
-
             dCol = (0, 255, 255)
             #detected = False
             if not OVERRIDE and self.send_rc_control and DETECT_ENABLED:
                 self.track_object(OVERRIDE, frameRet, szX, szY)
-                dCol = lerp(np.array((0, 0, 255)), np.array((255, 255, 255)), tDistance + 1 / 7)
 
+            show = "".format(PMode.NONE)
             if OVERRIDE:
-                show = "OVERRIDE"
+                show = "MANUAL"
                 dCol = (255,255,255)
-            else:
-                show = "AI: {}".format(str(tDistance))
+            elif self.mode == PMode.FOLLOW or self.mode == PMode.FLIP:
+                show = "FOUND!!!"
+            elif self.mode == PMode.FIND:
+                show = "Finding.."
 
-            mode_label = ' Mode: {}'.format(self.mode)
+            mode_label = 'Mode: {}'.format(self.mode)
 
             # Draw the distance choosen
             cv2.putText(frameRet, mode_label, (32, 600), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
-            cv2.putText(frameRet,show,(32,664),cv2.FONT_HERSHEY_SIMPLEX,1,dCol,2)
+            cv2.putText(frameRet, show, (32,664), cv2.FONT_HERSHEY_SIMPLEX, 1, dCol, 2)
 
             # Display the resulting frame
             cv2.imshow('FINDER DRONE', frameRet)
@@ -277,7 +277,7 @@ class DroneUI(object):
             if sleep_time < 0:
                 sleep_time = 0
                 print('SLEEEP TIME NEGATIVE FOR FRAME {} ({}s).. TURNING IT 0'.format(imgCount, frame_time))
-            if args.save_session:
+            if args.save_session and self.send_rc_control == True:  # To avoid recording before takeoff
                 output_filename = "{}/tellocap{}.jpg".format(ddir,imgCount)
                 print('Created {}'.format(output_filename))
                 cv2.imwrite(output_filename, frameRet)
@@ -289,7 +289,7 @@ class DroneUI(object):
 
         # When everything done, release the capture
         # cv2.destroyWindow('FINDER DRONE')
-        cv2.waitKey(0)
+        # cv2.waitKey(0)
         cv2.destroyAllWindows()
         # Call it always before finishing. I deallocate resources.
         self.tello.end()
@@ -302,7 +302,7 @@ class DroneUI(object):
 
     def land_and_set_none(self):
         if not args.debug:
-            print("Landing")
+            print("------------------Landing--------------------")
             self.tello.land()
         self.send_rc_control = False
         self.mode = PMode.NONE  # TODO: Consider calling reset
