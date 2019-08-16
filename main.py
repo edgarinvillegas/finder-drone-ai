@@ -88,7 +88,7 @@ if args.save_session:
 
 PMode = Enum('PilotMode', 'NONE FIND FOLLOW FLIP')
 
-onFoundAction = PMode.FLIP  # Can be FOLLOW or FLIP
+onFoundAction = PMode.FOLLOW  # Can be FOLLOW or FLIP
 
 class DroneUI(object):
     
@@ -161,13 +161,11 @@ class DroneUI(object):
 
             print('---')
             # TODO: Analize if colors have to be tweaked
-            frame = cv2.cvtColor(frame_read.frame, cv2.COLOR_BGR2RGB)
-            frameRet = cv2.flip(frame_read.frame, 0)   # Vertical flip due to the mirror
-            # frameRet = frame_read.frame
+            frame =  cv2.flip(frame_read.frame, 0) # Vertical flip due to the mirror
+            frameRet = frame.copy()
 
             vid = self.tello.get_video_capture()
             
-            frame = np.rot90(frame)
             imgCount+=1
 
             #time.sleep(1 / FPS)
@@ -179,6 +177,11 @@ class DroneUI(object):
                 if chr(k) in 'ikjluoyhp': OVERRIDE = True
             except:
                 ...
+
+            if k == ord('e'):
+                DETECT_ENABLED = True
+            elif k == ord('d'):
+                DETECT_ENABLED = False
 
             # Press T to take off
             if k == ord('t'):
@@ -235,7 +238,7 @@ class DroneUI(object):
 
             if self.mode == PMode.FIND and not OVERRIDE:
                 #frame ret will get the squares drawn after this operation
-                if self.process_move_key_andor_square_bounce(key_to_process, frameRet) == False:
+                if self.process_move_key_andor_square_bounce(key_to_process, frame, frameRet) == False:
                     # If the queue is empty and the object hasn't been found, land and finish
                     self.land_and_set_none()
                     #self.update()  # Just in case
@@ -246,7 +249,7 @@ class DroneUI(object):
             dCol = (0, 255, 255)
             #detected = False
             if not OVERRIDE and self.send_rc_control and DETECT_ENABLED:
-                self.track_object(OVERRIDE, frameRet, szX, szY)
+                self.track_object(OVERRIDE, frame, frameRet, szX, szY)
 
             show = ""
             if OVERRIDE:
@@ -277,9 +280,7 @@ class DroneUI(object):
                 sleep_time = 0
                 print('SLEEEP TIME NEGATIVE FOR FRAME {} ({}s).. TURNING IT 0'.format(imgCount, frame_time))
             if args.save_session and self.send_rc_control == True:  # To avoid recording before takeoff
-                output_filename = "{}/tellocap{}.jpg".format(ddir,imgCount)
-                print('Created {}'.format(output_filename))
-                cv2.imwrite(output_filename, frameRet)
+                self.create_frame_files(frame, frameRet, imgCount)
             time.sleep(sleep_time)
 
 
@@ -293,11 +294,22 @@ class DroneUI(object):
         # Call it always before finishing. I deallocate resources.
         self.tello.end()
 
+    def create_frame_files(self, frame, frameRet, imgCount):
+        def create_frame_file(image, subdir, print_log = False):
+            global ddir
+            path = ddir + '/' + subdir
+            if not os.path.exists(path): os.makedirs(path)
+            filename = "{}/tellocap{}.jpg".format(path, imgCount)
+            if print_log: print('Created {}'.format(filename))
+            cv2.imwrite(filename, image)
+        create_frame_file(frame, 'raw')
+        create_frame_file(frameRet, 'output', True)
+
     def flip(self):
         print('Flip!')
         self.left_right_velocity = self.for_back_velocity = 0
         self.update()
-        time.sleep(self.tello.TIME_BTW_COMMANDS)
+        time.sleep(self.tello.TIME_BTW_COMMANDS*2)
         self.tello.flip_left()
         #self.tello.flip_right()
         # The following 2 lines allow going back to follow mode
@@ -324,9 +336,9 @@ class DroneUI(object):
             else:
                 break
 
-    def process_move_key_andor_square_bounce(self, k, frameRet):
+    def process_move_key_andor_square_bounce(self, k, frame, frameRet = None):
         self.process_move_key(k)  # By default use key direction
-        (hor_dir, ver_dir) = get_squares_push_directions(frameRet)
+        (hor_dir, ver_dir) = get_squares_push_directions(frame, frameRet)
         print('(hor_dir, ver_dir): ({}, {})'.format(hor_dir, ver_dir))
         oq = globals.mission.operations_queue
         print('operations_queue len: ', len(oq))
@@ -384,7 +396,7 @@ class DroneUI(object):
         if k == ord('p'):
             print('pressing p')
 
-    def save_detection(self, frameRet, firstDetection):
+    def save_detection(self, frame, frameRet, firstDetection):
         output_filename_det_full = "{}/detected_full.jpg".format(ddir)
         cv2.imwrite(output_filename_det_full, frameRet)
         print('Created {}'.format(output_filename_det_full))
@@ -402,18 +414,14 @@ class DroneUI(object):
             cv2.waitKey(0)
         Timer(1.0, show_detection).start()
 
-    def track_object(self, OVERRIDE, frameRet, szX, szY):
+    def track_object(self, OVERRIDE, frame, frameRet, szX, szY):
         detections = self.model.detect(frameRet)
         # These are our center dimensions
         (frame_h, frame_w) = frameRet.shape[:2]
         cWidth = int(frame_w / 2)
         cHeight = int(frame_h / 2)
-        noDetections = len(detections) == 0
-        if len(detections) > 0:
-            print('CAT FOUND!!!!!!!!!!')
-            if self.mode != onFoundAction:  # To create it only the first time
-                self.save_detection(frameRet, detections[0])
-            self.mode = onFoundAction
+        thereAreDetections = len(detections) > 0
+
         # if we've given rc controls & get object coords returned
         #if self.send_rc_control and not OVERRIDE:
         if self.mode == PMode.FOLLOW and not OVERRIDE:
@@ -473,10 +481,16 @@ class DroneUI(object):
                 cv2.putText(frameRet, str(vDistance), (0, 64), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
 
             # if there are no objects detected, don't do anything
-            if noDetections:
+            if not thereAreDetections:
                 print("CAT NOT DETECTED NOW")
         # Draw the center of screen circle, this is what the drone tries to match with the target coords
         # cv2.circle(frameRet, (cWidth, cHeight), 10, (0, 0, 255), 2)
+
+        if thereAreDetections:
+            print('CAT FOUND!!!!!!!!!!')
+            if self.mode != onFoundAction:  # To create it only the first time
+                self.save_detection(frame, frameRet, detections[0])
+            self.mode = onFoundAction
 
         return len(detections) > 0
 

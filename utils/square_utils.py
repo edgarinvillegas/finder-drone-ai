@@ -28,9 +28,9 @@ def get_square_direction(full_frame, approx):
         return None
 
 # byref frame (will be drawn)
-def get_squares_push_directions(frame):
+def get_squares_push_directions(frame, frameRet):
     hor_dir, ver_dir = ("", "")
-    squares_coords = get_squares_coords_and_dirs(frame)
+    squares_coords = get_squares_coords_and_dirs(frame, frameRet)
     dir_index = 2   # Because the tuple is (x, y, dir)
     some_forward = any(sq[dir_index] == 'forward' for sq in squares_coords)
     some_back = any(sq[dir_index] == 'back' for sq in squares_coords)
@@ -102,7 +102,7 @@ def get_spot_coords(frame):
         return None
 
 # byref frame (will be drawn)
-def get_squares_coords_and_dirs(frame):
+def get_squares_coords_and_dirs(frame, frameRet):
     # convert the frame to grayscale, blur it, and detect edges
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     blurred = cv2.GaussianBlur(gray, (7, 7), 0)
@@ -145,7 +145,7 @@ def get_squares_coords_and_dirs(frame):
                 print('SQUARE FOUND size: ({}, {})'.format(w, h), 'solidity: ', solidity, 'aspectRatio: ', aspectRatio, 'dir: ', dir)
                 # draw an outline around the target and update the status
                 # text
-                cv2.drawContours(frame, [approx], -1, (0, 0, 255), 4)
+                cv2.drawContours(frameRet, [approx], -1, (0, 0, 255), 4)
 
                 # compute the center of the contour region and draw the
                 # crosshairs
@@ -153,23 +153,23 @@ def get_squares_coords_and_dirs(frame):
                 (cX, cY) = (int(M["m10"] // M["m00"]), int(M["m01"] // M["m00"]))
                 (startX, endX) = (int(cX - (w * 0.15)), int(cX + (w * 0.15)))
                 (startY, endY) = (int(cY - (h * 0.15)), int(cY + (h * 0.15)))
-                cv2.line(frame, (startX, cY), (endX, cY), (0, 0, 255), 3)
-                cv2.line(frame, (cX, startY), (cX, endY), (0, 0, 255), 3)
+                cv2.line(frameRet, (startX, cY), (endX, cY), (0, 0, 255), 3)
+                cv2.line(frameRet, (cX, startY), (cX, endY), (0, 0, 255), 3)
 
                 # Draw direction indicators (a circle on the appropiate cross tip
                 dir_circle_color = (255, 0, 0)
                 if dir == 'left':
                     #left - blue
-                    cv2.circle(frame, (startX, cY), 10, dir_circle_color, -2)
+                    cv2.circle(frameRet, (startX, cY), 10, dir_circle_color, -2)
                 elif dir == 'right':
                     #right - light blue
-                    cv2.circle(frame, (endX, cY), 10, dir_circle_color, -2)
+                    cv2.circle(frameRet, (endX, cY), 10, dir_circle_color, -2)
                 elif dir == 'forward':
                     #forward - red
-                    cv2.circle(frame, (cX, startY), 10, dir_circle_color, -2)
+                    cv2.circle(frameRet, (cX, startY), 10, dir_circle_color, -2)
                 elif dir == 'back':
                     # back - black
-                    cv2.circle(frame, (cX, endY), 10, dir_circle_color, -2)
+                    cv2.circle(frameRet, (cX, endY), 10, dir_circle_color, -2)
 
                 square_coords.append((cX, cY, dir))
 
