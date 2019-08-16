@@ -32,6 +32,7 @@ frame = cv2.imread('images/glass-cat.jpg')
 
 start = time.time()
 detections = model.detect(frame)
+
 print('Took {} s'.format(time.time()-start))
 model.drawDetections(frame, detections)
 print(detections)

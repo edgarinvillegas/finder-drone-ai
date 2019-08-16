@@ -51,9 +51,10 @@ class FasterRcnnFlipDetectionModel(BaseDetectionModel):  #LABELS
 
         # Now we have to flip the y coordinates of boxes
         h = img.shape[1]
-        vflipBoxes =  predFlip['boxes']
-        vflipBoxes[:, 1] = h - vflipBoxes[:, 1]
-        vflipBoxes[:, 3] = h - vflipBoxes[:, 3]
+        vflipBoxes =  predFlip['boxes']             # aux tensor
+        startYOrigCol = vflipBoxes[:, 1].clone()
+        vflipBoxes[:, 1] = h - vflipBoxes[:, 3]     # startY column will become flipped endY
+        vflipBoxes[:, 3] = h - startYOrigCol        # endY column will become flipped startY
 
         pred = {
             'labels': torch.cat((predNormal['labels'], predFlip['labels'])),
