@@ -7,6 +7,7 @@ import os
 import argparse
 import imutils
 import globals.mission
+from threading import Timer
 
 from enum import Enum
 from models import FaceDetectionModel, CatDetectionModel
@@ -85,31 +86,10 @@ if args.save_session:
     ddir = "Sessions/Session {}".format(str(datetime.datetime.now()).replace(':','-').replace('.','_'))
     os.mkdir(ddir)
 
-PMode = Enum('PilotMode', 'NONE SPIRAL FOLLOW')
+PMode = Enum('PilotMode', 'NONE FIND FOLLOW FLIP')
+#OnFoundAction = Enum('OnFoundAction', 'FLIP FOLLOW')
 
-# It gets the next simulated key from queue that is not blocked by a square
-# def next_auto_unblocked_key(frameRet):
-#     autoK = next_auto_key()
-#     if autoK != -1:
-#         block_right, block_forward, block_left, block_back = should_block_boundaries(frameRet)
-#         if block_right + block_forward + block_left + block_back > 0:
-#             print('Square found, going backwards')
-#             return ord('k')
-#
-#         # Check the cases where we have to block
-#         if autoK == ord('l') and block_right:
-#             print("Bouncing key l to j because there's a block to the right")
-#             autoK = ord('j')
-#         if autoK == ord('i') and block_forward:
-#             print("Bouncing key i to k because there's a block forward")
-#             autoK = ord('k')
-#         if autoK == ord('j') and block_left:
-#             print("Bouncing key j to l because there's a block to the left")
-#             autoK = ord('l')
-#         if autoK == ord('k') and block_back:
-#             print("Bouncing key k to i because there's a block backward")
-#             autoK = ord('i')
-#     return autoK
+onFoundAction = PMode.FOLLOWg
 
 class DroneUI(object):
     
@@ -123,7 +103,7 @@ class DroneUI(object):
         self.up_down_velocity = 0
         self.yaw_velocity = 0
         self.speed = 10
-        self.mode = PMode.NONE  # Can be '', 'SPIRAL', 'OVERRIDE' or 'FOLLOW'
+        self.mode = PMode.NONE  # Can be '', 'FIND', 'OVERRIDE' or 'FOLLOW'
 
         self.send_rc_control = False
 
@@ -157,8 +137,6 @@ class DroneUI(object):
         DETECT_ENABLED = False  # Set to true to automatically start in follow mode
         self.mode = PMode.NONE
 
-        # oSpeed = args.override_speed
-        tDistance = args.distance
         self.tello.get_battery()
         
         # Safety Zone X
@@ -212,8 +190,8 @@ class DroneUI(object):
                 self.send_rc_control = True
 
             if k == ord('s') and self.send_rc_control == True:
-                self.mode = PMode.SPIRAL
-                DETECT_ENABLED = True   # To start following with spiral
+                self.mode = PMode.FIND
+                DETECT_ENABLED = True   # To start following with autopilot
                 OVERRIDE = False
                 print('Switch to spiral mode')
 
@@ -226,7 +204,7 @@ class DroneUI(object):
             # Press L to land
             if k == ord('g'):
                 self.land_and_set_none()
-                self.update()  ## Just in case
+                # self.update()  ## Just in case
                 break
 
             # Press Backspace for controls override
@@ -238,15 +216,6 @@ class DroneUI(object):
                     OVERRIDE = False
                     print("OVERRIDE DISABLED")
 
-            # if k == ord('1'):
-            #     oSpeed = 1
-            # # Press 2 to set speed to 2
-            # if k == ord('2'):
-            #     oSpeed = 2
-            # # Press 3 to set speedee to 3
-            # if k == ord('3'):
-            #     oSpeed = 3
-
             # Quit the software
             if k == 27:
                 should_stop = True
@@ -254,7 +223,7 @@ class DroneUI(object):
                 break
 
             autoK = -1
-            if k == -1 and self.mode == PMode.SPIRAL:
+            if k == -1 and self.mode == PMode.FIND:
                 if not OVERRIDE:
                     autoK = next_auto_key()
                     if autoK == -1:
@@ -263,14 +232,14 @@ class DroneUI(object):
                     else:
                         print('Automatically pressing ', chr(autoK))
 
-            key_to_process = autoK if k == -1 and self.mode == PMode.SPIRAL and OVERRIDE == False else k
+            key_to_process = autoK if k == -1 and self.mode == PMode.FIND and OVERRIDE == False else k
 
-            if self.mode == PMode.SPIRAL and not OVERRIDE:
+            if self.mode == PMode.FIND and not OVERRIDE:
                 #frame ret will get the squares drawn after this operation
                 if self.process_move_key_andor_square_bounce(key_to_process, frameRet) == False:
                     # If the queue is empty and the object hasn't been found, land and finish
                     self.land_and_set_none()
-                    self.update()  # Just in case
+                    #self.update()  # Just in case
                     break
             else:
                 self.process_move_key(key_to_process)
@@ -278,8 +247,10 @@ class DroneUI(object):
             tDistance = 3
 
             dCol = (0, 255, 255)
+            #detected = False
             if not OVERRIDE and self.send_rc_control and DETECT_ENABLED:
-                dCol = self.track_object(OVERRIDE, frameRet, szX, szY, tDistance)
+                self.track_object(OVERRIDE, frameRet, szX, szY)
+                dCol = lerp(np.array((0, 0, 255)), np.array((255, 255, 255)), tDistance + 1 / 7)
 
             if OVERRIDE:
                 show = "OVERRIDE"
@@ -294,7 +265,11 @@ class DroneUI(object):
             cv2.putText(frameRet,show,(32,664),cv2.FONT_HERSHEY_SIMPLEX,1,dCol,2)
 
             # Display the resulting frame
-            cv2.imshow(f'Tello Tracking...',frameRet)
+            cv2.imshow('FINDER DRONE', frameRet)
+            if (self.mode == PMode.FLIP):
+                self.flip()
+                OVERRIDE = True
+
             self.update()  # Moved here instead of beginning of loop to have better accuracy
 
             frame_time = time.time() - frame_time_start
@@ -308,14 +283,22 @@ class DroneUI(object):
                 cv2.imwrite(output_filename, frameRet)
             time.sleep(sleep_time)
 
+
         # On exit, print the battery
         self.tello.get_battery()
 
         # When everything done, release the capture
+        # cv2.destroyWindow('FINDER DRONE')
+        cv2.waitKey(0)
         cv2.destroyAllWindows()
-        
         # Call it always before finishing. I deallocate resources.
         self.tello.end()
+
+    def flip(self):
+        print('Flip!')
+        self.tello.flip_left()
+        self.tello.flip_right()
+        self.left_right_velocity = self.up_down_velocity = 0
 
     def land_and_set_none(self):
         if not args.debug:
@@ -361,14 +344,7 @@ class DroneUI(object):
             keys_to_pop += 'l'
         if(len(keys_to_pop) > 0):
             self.oq_discard_keys(keys_to_pop)
-
         return (len(oq) > 0)
-
-        # operations_queue looks like:
-        # [
-        #   {'key': 'j', frames: 30},
-        #   {'key': 'i', frames: 18},
-        # ]
 
     def process_move_key(self, k):
         # i & k to fly forward & back
@@ -403,19 +379,25 @@ class DroneUI(object):
         if k == ord('p'):
             print('pressing p')
 
-    def on_object_detected_first_time(self, frameRet, firstDetection):
+    def save_detection(self, frameRet, firstDetection):
         output_filename_det_full = "{}/detected_full.jpg".format(ddir)
         cv2.imwrite(output_filename_det_full, frameRet)
         print('Created {}'.format(output_filename_det_full))
         (x, y, w, h) = firstDetection['box']
-        subframe = frameRet[y:y+h, x:x+w]
-        output_filename_det_sub = "{}/detected_sub.jpg".format(ddir)
-        cv2.imwrite(output_filename_det_sub, frameRet)
-        print('Created {}'.format(output_filename_det_sub))
-        cv2.imshow('Detected', subframe)
-        cv2.waitKey(0)
+        add_to_borders = 100
+        (xt, yt) = (x + w + add_to_borders, y + h + add_to_borders)
+        (x, y) = (max(0, x - add_to_borders), max(0, y - add_to_borders))
 
-    def track_object(self, OVERRIDE, frameRet, szX, szY, tDistance):
+        subframe = frameRet[y:yt, x:xt].copy()
+        def show_detection():
+            output_filename_det_sub = "{}/detected_sub.jpg".format(ddir)
+            cv2.imwrite(output_filename_det_sub, subframe)
+            print('Created {}'.format(output_filename_det_sub))
+            cv2.imshow('Detected', subframe)
+            cv2.waitKey(0)
+        Timer(1.0, show_detection).start()
+
+    def track_object(self, OVERRIDE, frameRet, szX, szY):
         detections = self.model.detect(frameRet)
         # These are our center dimensions
         (frame_h, frame_w) = frameRet.shape[:2]
@@ -424,10 +406,9 @@ class DroneUI(object):
         noDetections = len(detections) == 0
         if len(detections) > 0:
             print('CAT FOUND!!!!!!!!!!')
-            if self.mode != PMode.FOLLOW:  # To create it only the first time
-                self.on_object_detected_first_time(frameRet, detections[0])
-
-            self.mode = PMode.FOLLOW
+            if self.mode != onFoundAction:  # To create it only the first time
+                self.save_detection(frameRet, detections[0])
+            self.mode = onFoundAction
         # if we've given rc controls & get object coords returned
         #if self.send_rc_control and not OVERRIDE:
         if self.mode == PMode.FOLLOW and not OVERRIDE:
@@ -490,9 +471,9 @@ class DroneUI(object):
             if noDetections:
                 print("CAT NOT DETECTED NOW")
         # Draw the center of screen circle, this is what the drone tries to match with the target coords
-        cv2.circle(frameRet, (cWidth, cHeight), 10, (0, 0, 255), 2)
-        dCol = lerp(np.array((0, 0, 255)), np.array((255, 255, 255)), tDistance + 1 / 7)
-        return dCol
+        # cv2.circle(frameRet, (cWidth, cHeight), 10, (0, 0, 255), 2)
+
+        return len(detections) > 0
 
     def battery(self):
         return self.tello.get_battery()[:2]
@@ -500,7 +481,7 @@ class DroneUI(object):
     def update(self):
         """ Update routine. Send velocities to Tello."""
         if self.send_rc_control:
-            print('Sending speeds to tello: {} {}'.format(self.left_right_velocity, self.for_back_velocity) )
+            print('Sending speeds to tello. H: {} V: {}'.format(self.left_right_velocity, self.for_back_velocity) )
             self.tello.send_rc_control(self.left_right_velocity, self.for_back_velocity, self.up_down_velocity,
                                        self.yaw_velocity)
 
@@ -515,7 +496,6 @@ def main():
 
     # run frontend
     frontend.run()
-    pass
 
 
 if __name__ == '__main__':
