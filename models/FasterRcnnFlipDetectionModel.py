@@ -6,7 +6,7 @@ import torchvision
 import numpy as np
 from . import BaseDetectionModel
 
-class FasterRcnnDetectionModel(BaseDetectionModel):  #LABELS
+class FasterRcnnFlipDetectionModel(BaseDetectionModel):  #LABELS
     #COLORS
     #net
     #confidence

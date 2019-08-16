@@ -1,7 +1,7 @@
 # import necessary libraries
-from . import FasterRcnnDetectionModel
+from . import FasterRcnnFlipDetectionModel
 
-class CatDetectionModel(FasterRcnnDetectionModel):  #LABELS
+class CatDetectionModel(FasterRcnnFlipDetectionModel):  #LABELS
     #COLORS
     #net
     #confidence
@@ -21,9 +21,10 @@ class CatDetectionModel(FasterRcnnDetectionModel):  #LABELS
             # Classes that belong to a cat
             # This filter is just a shortcut trick for the prototype
             # In production, we would have a FasterRCNN trained with aerial cat photos, without the need of this filter
-            if  cid == 16 or cid == 17 or cid == 18 or cid == 88:
+            if cid == 17 or cid == 18:  # Living
+            # if cid == 16 or cid == 17 or cid == 18:     # Lilas
+            # if  cid == 16 or cid == 17 or cid == 18 or cid == 88:     # deprecated
                 print('Class detected: ', cid, 'Confidence: ', orig_detection['confidence'])
-            #if cid == 16 or cid == 17 or cid == 18:
                 orig_detection['classID'] = 0
                 detections.append(orig_detection)
         return detections
