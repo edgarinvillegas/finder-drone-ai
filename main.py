@@ -89,7 +89,7 @@ if args.save_session:
 PMode = Enum('PilotMode', 'NONE FIND FOLLOW FLIP')
 #OnFoundAction = Enum('OnFoundAction', 'FLIP FOLLOW')
 
-onFoundAction = PMode.FOLLOWg
+onFoundAction = PMode.FOLLOW
 
 class DroneUI(object):
     

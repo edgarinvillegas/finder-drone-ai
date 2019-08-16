@@ -67,10 +67,10 @@ class FasterRcnnDetectionModel(BaseDetectionModel):  #LABELS
         pred_classes = [i for i in list(pred['labels'].numpy())]
         pred_boxes = [[(i[0], i[1]), (i[2], i[3])] for i in list(pred['boxes'].detach().numpy())]
         pred_score = list(pred['scores'].detach().numpy())
-        pre_pred_t = [pred_score.index(x) for x in pred_score if x > self.confidence]
-        pred_t = 0 if len(pre_pred_t) == 0 else pre_pred_t[-1]
-        pred_boxes = pred_boxes[:pred_t + 1]
-        pred_classes = pred_classes[:pred_t + 1]
+        # pre_pred_t = [pred_score.index(x) for x in pred_score if x > self.confidence]
+        # pred_t = 0 if len(pre_pred_t) == 0 else pre_pred_t[-1]
+        # pred_boxes = pred_boxes[:pred_t + 1]
+        # pred_classes = pred_classes[:pred_t + 1]
         # return pred_boxes, pred_class
         detections = []
         for i in range(0, len(pred_classes)):

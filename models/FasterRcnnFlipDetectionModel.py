@@ -39,11 +39,29 @@ class FasterRcnnFlipDetectionModel(BaseDetectionModel):  #LABELS
         # img = Image.fromarray(frame)  # Not needed anymore
         # img90 = self.transform(frame.rot90())
         img = self.transform(frame)
-        if self.useCuda: img = img.cuda()
+        original_shape = img.shape
+        if self.useCuda:
+            img = img.cuda()
+        #print('img shape', img.shape)
+        imgVflip = torch.flip(img, [1])  # Vertical flip ([1] because it's dimension 1)
+        # We take advantage of predicting for the original image and the vertical flip in parallel
+        preds = self.net.forward([img, imgVflip])
 
-        preds = self.net.forward([img])
-        pred = preds[0] # Because it can predict several images at a time, we're only doing for 1
+        predNormal, predFlip = preds
 
+        # Now we have to flip the y coordinates of boxes
+        h = img.shape[1]
+        vflipBoxes =  predFlip['boxes']
+        vflipBoxes[:, 1] = h - vflipBoxes[:, 1]
+        vflipBoxes[:, 3] = h - vflipBoxes[:, 3]
+
+        pred = {
+            'labels': torch.cat((predNormal['labels'], predFlip['labels'])),
+            'boxes': torch.cat((predNormal['boxes'], vflipBoxes)),
+            'scores': torch.cat((predNormal['scores'], predFlip['scores'])),
+        }
+
+        detections = []
         # If the model is for single class, pre-filter it
         if self.detect_single_class() > 0:
             filtered_indexes = pred['labels'] == self.detect_single_class()
@@ -67,12 +85,8 @@ class FasterRcnnFlipDetectionModel(BaseDetectionModel):  #LABELS
         pred_classes = [i for i in list(pred['labels'].numpy())]
         pred_boxes = [[(i[0], i[1]), (i[2], i[3])] for i in list(pred['boxes'].detach().numpy())]
         pred_score = list(pred['scores'].detach().numpy())
-        pre_pred_t = [pred_score.index(x) for x in pred_score if x > self.confidence]
-        pred_t = 0 if len(pre_pred_t) == 0 else pre_pred_t[-1]
-        pred_boxes = pred_boxes[:pred_t + 1]
-        pred_classes = pred_classes[:pred_t + 1]
-        # return pred_boxes, pred_class
-        detections = []
+
+
         for i in range(0, len(pred_classes)):
             pred_box = pred_boxes[i]
             confidence = pred_score[i]
@@ -85,4 +99,5 @@ class FasterRcnnFlipDetectionModel(BaseDetectionModel):  #LABELS
                     'confidence': float(confidence),
                     'classID': classID
                 })
+        detections.sort(key = lambda d: d['confidence'], reverse = True)
         return detections
