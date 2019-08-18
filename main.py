@@ -28,7 +28,7 @@ parser.add_argument('-h', '--help', action='help', default=argparse.SUPPRESS,
 parser.add_argument('-c', '--cat', default='any',
     help='use -c to choose cat to be found. Can be lily, juana, whisky or "any"')
 
-parser.add_argument('-m', '--mission', default='fffff-l-bbbbb-l-'*10,
+parser.add_argument('-m', '--mission', default='fffffff-l-bbbbbbb-l-'*10,
     help='use -m to choose a mission path for the drone. For example ff-ll-bb-rr makes a square')
 
 parser.add_argument('-sx', '--saftey_x', type=int, default=200,
