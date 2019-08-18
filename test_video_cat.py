@@ -5,7 +5,7 @@
 # import the necessary packages
 import argparse
 
-from models import CatDetectionModel
+from models import CatDetectionModel, MyCatsDetectionModel
 from lib import VideoInput
 from lib import FileVideoOutput, WindowVideoOutput
 import time
@@ -21,16 +21,18 @@ args = vars(ap.parse_args())
 # vIn = VideoInput().start()	# Webcam
 # vIn = VideoInput("rtsp://user:pass@192.168.1.100/11").start()	# Webcam with RTSP
 # vIn = VideoInput("videos/dog-kid.mp4").start()  # File
+#vIn = VideoInput("videos/lil-jua-whi-garden-horiz.mp4").start()  # File
 vIn = VideoInput("videos/drone-tests/jardin02-lily_juanis_bicho.mp4").start()  # File
 
-model = CatDetectionModel(args["confidence"], args["threshold"])
+# model = CatDetectionModel(args["confidence"], args["threshold"])
+model = MyCatsDetectionModel(args["confidence"], args["threshold"])
 
 ## --- VIDEO OUTPUT SELECTION ---
 vOut = WindowVideoOutput()			     # Show results on window
 # vOut = FileVideoOutput("output/output.avi")	 # Creates an output video file
 
 f = 0
-process_every = 5 # Number of frames
+process_every = 1 # Number of frames
 # loop over frames from the video file stream
 total_time = 0
 n_frames_processed = 0

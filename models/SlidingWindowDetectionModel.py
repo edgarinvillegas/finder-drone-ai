@@ -13,7 +13,7 @@ def sliding_window(image, stepSize, windowSize):
             # yield the current window
             yield (x, y, image[y:y + windowSize[1], x:x + windowSize[0]])
 
-class CustomDetectionModel(BaseDetectionModel):    #LABELS
+class SlidingWindowDetectionModel(BaseDetectionModel):    #LABELS
     #COLORS
     #net
     #confidence

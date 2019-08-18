@@ -6,7 +6,7 @@
 import argparse
 import numpy as np
 
-from models import YoloDetectionModel, SsdDetectionModel, FaceDetectionModel, CustomDetectionModel
+from models import YoloDetectionModel, SsdDetectionModel, FaceDetectionModel, SlidingWindowDetectionModel
 from lib import VideoInput
 from lib import FileVideoOutput, WindowVideoOutput
 import cv2
@@ -25,7 +25,7 @@ vIn = VideoInput("dataset/{}.mp4".format(currentClass)).start()  # File
 model = YoloDetectionModel(args["confidence"], args["threshold"])	# Yolo. [Make sure you have model file. See README.md]
 # model = SsdDetectionModel(args["confidence"])		# SSD
 # model = FaceDetectionModel(args["confidence"])		# Face
-# model = CustomDetectionModel(confidence=0.3)
+# model = SlidingWindowDetectionModel(confidence=0.3)
 
 ## --- VIDEO OUTPUT SELECTION ---
 vOut = WindowVideoOutput()			     # Show results on window

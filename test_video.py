@@ -5,7 +5,7 @@
 # import the necessary packages
 import argparse
 
-from models import YoloDetectionModel, SsdDetectionModel, FaceDetectionModel, CustomDetectionModel, FasterRcnnDetectionModel
+from models import YoloDetectionModel, SsdDetectionModel, FaceDetectionModel, SlidingWindowDetectionModel, FasterRcnnDetectionModel
 from lib import VideoInput
 from lib import FileVideoOutput, WindowVideoOutput
 import cv2
@@ -27,7 +27,7 @@ vIn = VideoInput("videos/drone-tests/jardin02-lily_juanis_bicho.mp4").start()  #
 # model = SsdDetectionModel(args["confidence"])		# SSD
 # model = FaceDetectionModel(args["confidence"])		# Face
 model = FasterRcnnDetectionModel(args["confidence"], args["threshold"])
-# model = CustomDetectionModel(confidence=0.3)
+# model = SlidingWindowDetectionModel(confidence=0.3)
 
 ## --- VIDEO OUTPUT SELECTION ---
 vOut = WindowVideoOutput()			     # Show results on window

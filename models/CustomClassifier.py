@@ -13,10 +13,12 @@ class CustomClassifier:
                                  [0.229, 0.224, 0.225])
         ])
     }
-    def __init__(self):
-        print('Loading model...')
+    def __init__(self, model_file):
+        print('Loading model {}...'.format(model_file))
         # self.model = torch.load('models/custom/custom.pt')
-        self.model = torch.load('models/custom/caltech_10-moose_model_1.pt')
+        # self.model = torch.load('models/custom/caltech_10-moose_model_1.pt')
+        # self.model = torch.load('train_results/mycats_model_3.pt')
+        self.model = torch.load(model_file)
         print('Model loaded.')
 
     def predict(self, image):

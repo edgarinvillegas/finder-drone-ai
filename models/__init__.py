@@ -8,4 +8,5 @@ from .FasterRcnnDetectionModel import FasterRcnnDetectionModel
 from .FasterRcnnFlipDetectionModel import FasterRcnnFlipDetectionModel
 from .CatDetectionModel import CatDetectionModel
 from .CustomClassifier import CustomClassifier
-from .CustomDetectionModel import CustomDetectionModel
+from .MyCatsDetectionModel import MyCatsDetectionModel
+from .SlidingWindowDetectionModel import SlidingWindowDetectionModel
