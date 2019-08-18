@@ -21,8 +21,8 @@ args = vars(ap.parse_args())
 # vIn = VideoInput().start()	# Webcam
 # vIn = VideoInput("rtsp://user:pass@192.168.1.100/11").start()	# Webcam with RTSP
 # vIn = VideoInput("videos/dog-kid.mp4").start()  # File
-#vIn = VideoInput("videos/lil-jua-whi-garden-horiz.mp4").start()  # File
-vIn = VideoInput("videos/drone-tests/jardin02-lily_juanis_bicho.mp4").start()  # File
+vIn = VideoInput("videos/lil-jua-whi-garden-horiz.mp4").start()  # File
+#vIn = VideoInput("videos/drone-tests/jardin02-lily_juanis_bicho.mp4").start()  # File
 
 # model = CatDetectionModel(args["confidence"], args["threshold"])
 model = MyCatsDetectionModel(args["confidence"], args["threshold"])

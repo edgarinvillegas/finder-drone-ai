@@ -12,9 +12,10 @@ class MyCatsDetectionModel(CatDetectionModel):  #LABELS
     # Confidence is called thershold in FasterRCNN
     def __init__(self, confidence = 0.5, threshold = 0.1):
         super().__init__(confidence, threshold)
-        self.LABELS = ['juana', 'lily', 'whisky']
-        self.COLORS = [(163, 237, 73), (255, 255, 255), (130, 130, 130) ]
-        self.classifier = CustomClassifier('train_results/mycats_model_3.pt')
+        self.LABELS = ['juana', 'lily', 'whisky', 'yayo']
+        self.COLORS = [(163, 237, 73), (255, 255, 255), (130, 130, 130), (0, 0, 0) ]
+        #self.classifier = CustomClassifier('train_results/mycats_model_3.pt')
+        self.classifier = CustomClassifier('train4_results/mycats_model_7.pt')
         #self.COLORS = np.random.uniform(0, 255, size=(len(self.LABELS), 3))
 
     def detect(self, frame):

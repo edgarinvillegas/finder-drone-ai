@@ -6,7 +6,7 @@
 import argparse
 import numpy as np
 
-from models import YoloDetectionModel, SsdDetectionModel, FaceDetectionModel, SlidingWindowDetectionModel
+from models import YoloDetectionModel, SsdDetectionModel, FaceDetectionModel, CatDetectionModel
 from lib import VideoInput
 from lib import FileVideoOutput, WindowVideoOutput
 import cv2
@@ -14,7 +14,7 @@ import cv2
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
 ap.add_argument("-c", "--confidence", type=float, default=0.5, help="minimum probability to filter weak detections")
-ap.add_argument("-t", "--threshold", type=float, default=0.3, help="threshold when applyong non-maxima suppression")
+ap.add_argument("-t", "--threshold", type=float, default=0.1, help="threshold when applyong non-maxima suppression")
 args = vars(ap.parse_args())
 
 ## --- VIDEO INPUT SELECTION ---
@@ -22,10 +22,10 @@ currentClass = "whisky"
 vIn = VideoInput("dataset/{}.mp4".format(currentClass)).start()  # File
 
 ## --- MODEL SELECTION ---
-model = YoloDetectionModel(args["confidence"], args["threshold"])	# Yolo. [Make sure you have model file. See README.md]
+# model = YoloDetectionModel(args["confidence"], args["threshold"])	# Yolo. [Make sure you have model file. See README.md]
 # model = SsdDetectionModel(args["confidence"])		# SSD
 # model = FaceDetectionModel(args["confidence"])		# Face
-# model = SlidingWindowDetectionModel(confidence=0.3)
+model = CatDetectionModel(args["confidence"], args["threshold"])
 
 ## --- VIDEO OUTPUT SELECTION ---
 vOut = WindowVideoOutput()			     # Show results on window
@@ -35,12 +35,11 @@ isFirstFrame = True
 
 #def processCatDetection()
 
-i = 1
+i = 4000
 
 def is_cat(detection):
 	label = model.LABELS[detection['classID']];
 	return label == 'cat'
-	return label in ['cat', 'dog', 'bird', 'person']
 
 # loop over frames from the video file stream
 while True:
@@ -69,14 +68,16 @@ while True:
 		else:
 			set = 'test'
 
-		# for example: dataset/train/juana1.jpg
-		cv2.imwrite('dataset/{}/ywhisky/{}{}.jpg'.format(set, currentClass, currentClass, i), subframe)
+		# for example: dataset/train/juana/juana1.jpg
+		cv2.imwrite('dataset/{}/{}/{}{}.jpg'.format(set, currentClass, currentClass, i), subframe)
 
 	model.drawDetections(frame, detections)
 
+	(h, w) = frame.shape[:2]
+	frame = cv2.resize(frame, (w // 2, h // 2))
 	# check if it's the first frame
 	if isFirstFrame:
-		vOut.setFrameSize((frame.shape[0], frame.shape[1]))
+		vOut.setFrameSize((h, w))
 		# some information on processing single frame
 		total = vIn.getTotalFrames()
 		if total > 0:
@@ -84,7 +85,7 @@ while True:
 			print("[INFO] single frame took {:.4f} seconds".format(elap))
 			print("[INFO] estimated total time to finish: {:.4f}".format(elap * total))
 		isFirstFrame = False
-	# write the output frame to disk
+	# write the output frame
 	vOut.write(frame)
 
 # release the file pointers
