@@ -1,3 +1,8 @@
+#1)Connect to Tello wify
+#2) Run
+# python main.py --save_session --cat=lily
+# python main.py --save_session --cat=any
+
 from djitellopy import Tello
 import cv2
 import numpy as np
@@ -10,7 +15,7 @@ import globals.mission
 from threading import Timer
 
 from enum import Enum
-from models import FaceDetectionModel, CatDetectionModel
+from models import FaceDetectionModel, CatDetectionModel, MyCatsDetectionModel
 from utils import missionStepToKeyFramesObj, mission_from_str, get_next_auto_key_fn
 # from utils import get_squares_coords, should_block_boundaries
 from utils import get_squares_push_directions
@@ -19,8 +24,12 @@ from utils import get_squares_push_directions
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter, add_help=False)
 parser.add_argument('-h', '--help', action='help', default=argparse.SUPPRESS,
                     help='** = required')
-parser.add_argument('-d', '--distance', type=int, default=3,
-    help='use -d to change the distance of the drone. Range 0-6')
+parser.add_argument('-c', '--cat', default='any',
+    help='use -c to choose cat to be found. Can be lily, juana, whisky or "any"')
+
+parser.add_argument('-m', '--mission', default='fffff-l-bbbbb-l-'*10,
+    help='use -m to choose a mission path for the drone. For example ff-ll-bb-rr makes a square')
+
 parser.add_argument('-sx', '--saftey_x', type=int, default=200,
     help='use -sx to change the saftey bound on the x axis . Range 0-480')
 parser.add_argument('-sy', '--saftey_y', type=int, default=200,
@@ -45,25 +54,14 @@ S2 = 5
 #acc = [500,250,250,150,110,70,50]
 
 # Frames per second of the window display
-FPS = 3  # 3 is appropiate
+FPS = 2  # 3 is appropiate
 
 # Frames needed per step
 frames_step = step_size / S * FPS
 
-old_mission = [
-    {'direction': 'forward', 'steps': 1},
-    {'direction': 'right', 'steps': 1},
-    {'direction': 'back', 'steps': 2},
-    {'direction': 'left', 'steps': 2},
+args.mission = 'fff-bbb-'
 
-    {'direction': 'forward', 'steps': 3},
-    {'direction': 'right', 'steps': 3},
-    {'direction': 'back', 'steps': 4},
-    {'direction': 'left', 'steps': 4},
-]
-
-#mission = mission_from_str('fffff-l-bbbb-l-fffff-l-bbbb-l-fffff-l-bbbb-l-fffff-l-bbbb-l-fffff-l-bbbb')
-mission = mission_from_str('fffff-l-bbbbb-l-fffff-l-bbbbb-l-fffff-l-bbbbb-l-fffff-l-bbbbb-l-fffff-l-bbbbb-l-fffff-l-bbbbb-l-fffff-l-bbbbb-l-fffff-l-bbbbb-l-fffff-l-bbbbb-l-fffff-l-bbbbb')
+mission = mission_from_str(args.mission)
 print('Mission: ', mission)
 
 
@@ -72,6 +70,7 @@ print('Mission: ', mission)
 next_auto_key = get_next_auto_key_fn(mission, frames_step)
 
 # If we are to save our sessions, we need to make sure the proper directories exist
+ddir = "."      # Temporary.
 if args.save_session:
     ddir = "Sessions"
 
@@ -120,7 +119,13 @@ class DroneUI(object):
             print("Could not start video stream")
             return
 
-        self.model = CatDetectionModel(0.5)
+
+        if args.cat == 'any':
+            print('Using CatDetectionModel')
+            self.model = CatDetectionModel(0.5)
+        else:
+            print('Using MyCatsDetectionModel ({})'.format(args.cat))
+            self.model = MyCatsDetectionModel(0.5)
 
         frame_read = self.tello.get_frame_read()
 
@@ -139,8 +144,7 @@ class DroneUI(object):
         # Safety Zone Y
         szY = args.saftey_y
         
-        if args.debug:
-            print("DEBUG MODE ENABLED!")
+        if args.debug: print("DEBUG MODE ENABLED!")
 
         while not should_stop:
             frame_time_start = time.time()
@@ -150,9 +154,6 @@ class DroneUI(object):
                 frame_read.stop()
                 self.update() ## Just in case
                 break
-
-
-            theTime = str(datetime.datetime.now()).replace(':','-').replace('.','_')
 
             print('---')
             # TODO: Analize if colors have to be tweaked
@@ -244,7 +245,7 @@ class DroneUI(object):
             dCol = (0, 255, 255)
             #detected = False
             if not OVERRIDE and self.send_rc_control and DETECT_ENABLED:
-                self.track_object(OVERRIDE, frame, frameRet, szX, szY)
+                self.detect_subjects(frame, frameRet, szX, szY)
 
             show = ""
             if OVERRIDE:
@@ -413,87 +414,80 @@ class DroneUI(object):
 
         Timer(0.5, show_detection).start()
 
-    def track_object(self, OVERRIDE, frame, frameRet, szX, szY):
+    def detect_subjects(self, frame, frameRet, szX, szY):
         detections = self.model.detect(frameRet)
-        # These are our center dimensions
-        (frame_h, frame_w) = frameRet.shape[:2]
-        cWidth = int(frame_w / 2)
-        cHeight = int(frame_h / 2)
-        thereAreDetections = len(detections) > 0
+        print('detections: ', detections)
+        # self.model.drawDetections(frameRet, detections)
 
-        if thereAreDetections:
-            print('CAT FOUND!!!!!!!!!!')
+        class_wanted = 0 if args.cat == 'any' else self.model.LABELS.index(args.cat)
+        detection = next(filter(lambda d: d['classID'] == class_wanted, detections), None)
+
+
+        isSubjectDetected = not detection is None
+
+        if isSubjectDetected:
+            print('{} FOUND!!!!!!!!!!'.format(self.model.LABELS[class_wanted]))
             #if self.mode != onFoundAction:  # To create it only the first time
             self.mode = onFoundAction
 
-        # if we've given rc controls & get object coords returned
-        #if self.send_rc_control and not OVERRIDE:
-        print('Following...')
-        for det in detections:
-            (x, y, w, h) = det['box']
-            # setting Object Box properties
-            obCol = (255, 0, 0)  # BGR 0-255
-            obStroke = 2
-
-            # end coords are the end of the bounding box x & y
-            end_cord_x = x + w
-            end_cord_y = y + h
-            end_size = w * 2
-
-            # Draw the object bounding box
-            cv2.rectangle(frameRet, (x, y), (end_cord_x, end_cord_y), obCol, obStroke)
-
+            # if we've given rc controls & get object coords returned
+            # if self.send_rc_control and not OVERRIDE:
             if self.mode == PMode.FOLLOW:
-                # This is not face detection so we don't need offset
-                UDOffset = 0
+                self.follow(detection, frameRet, szX, szY)
 
-                # these are our target coordinates
-                targ_cord_x = int((end_cord_x + x) / 2)
-                targ_cord_y = int((end_cord_y + y) / 2) + UDOffset
-
-                # This calculates the vector from the object to the center of the screen
-                vTrue = np.array((cWidth, cHeight))
-                vTarget = np.array((targ_cord_x, targ_cord_y))
-                vDistance = vTrue - vTarget
-
-                if not args.debug:
-                    if vDistance[0] < -szX:
-                        # Right
-                        self.left_right_velocity = S
-                    elif vDistance[0] > szX:
-                        # Left
-                        self.left_right_velocity = -S
-                    else:
-                        self.left_right_velocity = 0
-
-                    # for up & down
-                    if vDistance[1] > szY:
-                        self.for_back_velocity = S
-                    elif vDistance[1] < -szY:
-                        self.for_back_velocity = -S
-                    else:
-                        self.for_back_velocity = 0
-
-                # Draw the center of screen circle, this is what the drone tries to match with the target coords
-                cv2.circle(frameRet, (cWidth, cHeight), 10, (0, 0, 255), 2)
-
-                # Draw the target as a circle
-                cv2.circle(frameRet, (targ_cord_x, targ_cord_y), 10, (0, 255, 0), 2)
-
-                # Draw the safety zone
-                cv2.rectangle(frameRet, (targ_cord_x - szX, targ_cord_y - szY), (targ_cord_x + szX, targ_cord_y + szY),
-                              (0, 255, 0), obStroke)
-
-                # Draw the estimated drone vector position in relation to object bounding box
-                cv2.putText(frameRet, str(vDistance), (0, 64), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
-
-        if thereAreDetections:
-            self.show_save_detection(frame, frameRet, detections[0])
+            self.show_save_detection(frame, frameRet, detection)
         elif self.mode == onFoundAction:
             # if there are no objects detected, don't do anything
             print("CAT NOT DETECTED NOW")
 
-        return thereAreDetections
+        return isSubjectDetected
+
+    def follow(self, detection, frameRet, szX, szY):
+        print('Following...')
+        # These are our center dimensions
+        (frame_h, frame_w) = frameRet.shape[:2]
+        cWidth = int(frame_w / 2)
+        cHeight = int(frame_h / 2)
+        (x, y, w, h) = detection['box']
+        # end coords are the end of the bounding box x & y
+        end_cord_x = x + w
+        end_cord_y = y + h
+        # This is not face detection so we don't need offset
+        UDOffset = 0
+        # these are our target coordinates
+        targ_cord_x = int((end_cord_x + x) / 2)
+        targ_cord_y = int((end_cord_y + y) / 2) + UDOffset
+        # This calculates the vector from the object to the center of the screen
+        vTrue = np.array((cWidth, cHeight))
+        vTarget = np.array((targ_cord_x, targ_cord_y))
+        vDistance = vTrue - vTarget
+        if not args.debug:
+            if vDistance[0] < -szX:
+                # Right
+                self.left_right_velocity = S
+            elif vDistance[0] > szX:
+                # Left
+                self.left_right_velocity = -S
+            else:
+                self.left_right_velocity = 0
+
+            # for up & down
+            if vDistance[1] > szY:
+                self.for_back_velocity = S
+            elif vDistance[1] < -szY:
+                self.for_back_velocity = -S
+            else:
+                self.for_back_velocity = 0
+        # Draw the center of screen circle, this is what the drone tries to match with the target coords
+        cv2.circle(frameRet, (cWidth, cHeight), 10, (0, 0, 255), 2)
+        # Draw the target as a circle
+        cv2.circle(frameRet, (targ_cord_x, targ_cord_y), 10, (0, 255, 0), 2)
+        # Draw the safety zone
+        obStroke = 2
+        cv2.rectangle(frameRet, (targ_cord_x - szX, targ_cord_y - szY), (targ_cord_x + szX, targ_cord_y + szY),
+                      (0, 255, 0), obStroke)
+        # Draw the estimated drone vector position in relation to object bounding box
+        cv2.putText(frameRet, str(vDistance), (0, 64), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
 
     def battery(self):
         return self.tello.get_battery()[:2]

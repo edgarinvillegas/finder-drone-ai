@@ -38,16 +38,6 @@ class SlidingWindowDetectionModel(BaseDetectionModel):    #LABELS
             if window.shape[0] != winH or window.shape[1] != winW:
                 continue
 
-            # THIS IS WHERE YOU WOULD PROCESS YOUR WINDOW, SUCH AS APPLYING A
-            # MACHINE LEARNING CLASSIFIER TO CLASSIFY THE CONTENTS OF THE
-            # WINDOW
-            # since we do not have a classifier, we'll just draw the window
-            # clone = frame.copy()
-            # cv2.rectangle(clone, (x, y), (x + winW, y + winH), (0, 255, 0), 2)
-            # cv2.imshow("Window", clone)
-            # cv2.waitKey(1)
-            # time.sleep(0.5)
-
             (prediction, score, ps) = self.net.predict(window)
             # print('prediction: ', prediction)
             startX, startY, endX, endY = (x, y, x + winW, y + winH)
