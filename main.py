@@ -2,6 +2,7 @@
 #2) Run
 # python main.py --save_session --cat=lily
 # python main.py --save_session --cat=any
+# python main.py --save_session --cat=whisky --debug
 
 from djitellopy import Tello
 import cv2
@@ -58,8 +59,6 @@ FPS = 2  # 3 is appropiate
 
 # Frames needed per step
 frames_step = step_size / S * FPS
-
-args.mission = 'fff-bbb-'
 
 mission = mission_from_str(args.mission)
 print('Mission: ', mission)
@@ -306,8 +305,9 @@ class DroneUI(object):
         self.left_right_velocity = self.for_back_velocity = 0
         self.update()
         time.sleep(self.tello.TIME_BTW_COMMANDS*2)
-        self.tello.flip_left()
-        #self.tello.flip_right()
+        if not args.debug:
+            self.tello.flip_left()
+            #self.tello.flip_right()
         # The following 2 lines allow going back to follow mode
         self.mode = PMode.FOLLOW
         global onFoundAction
@@ -422,7 +422,6 @@ class DroneUI(object):
         class_wanted = 0 if args.cat == 'any' else self.model.LABELS.index(args.cat)
         detection = next(filter(lambda d: d['classID'] == class_wanted, detections), None)
 
-
         isSubjectDetected = not detection is None
 
         if isSubjectDetected:
@@ -461,7 +460,7 @@ class DroneUI(object):
         vTrue = np.array((cWidth, cHeight))
         vTarget = np.array((targ_cord_x, targ_cord_y))
         vDistance = vTrue - vTarget
-        if not args.debug:
+        if True or not args.debug:
             if vDistance[0] < -szX:
                 # Right
                 self.left_right_velocity = S
@@ -496,7 +495,8 @@ class DroneUI(object):
         """ Update routine. Send velocities to Tello."""
         if self.send_rc_control:
             print('Sending speeds to tello. H: {} V: {}'.format(self.left_right_velocity, self.for_back_velocity) )
-            self.tello.send_rc_control(self.left_right_velocity, self.for_back_velocity, self.up_down_velocity,
+            if not args.debug:
+                self.tello.send_rc_control(self.left_right_velocity, self.for_back_velocity, self.up_down_velocity,
                                        self.yaw_velocity)
 
 def lerp(a,b,c):
