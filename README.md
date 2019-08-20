@@ -5,7 +5,10 @@ My project to find anything with a drone!
 
 ## Running the code
 
-1) WIP 
+To run the main program:
+
+
+1) python  
 
 ### Package requirements
 - opencv

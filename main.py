@@ -1,8 +1,9 @@
-#1)Connect to Tello wify
+#1)Connect to Tello wifi
 #2) Run
-# python main.py --save_session --cat=lily
-# python main.py --save_session --cat=any
-# python main.py --save_session --cat=whisky --debug
+
+# python main.py --save_session --cat any --mission fffflbbbblfffflbbbbl
+# python main.py --save_session --cat whisky --debug
+
 
 from djitellopy import Tello
 import cv2
@@ -416,8 +417,8 @@ class DroneUI(object):
 
     def detect_subjects(self, frame, frameRet, szX, szY):
         detections = self.model.detect(frameRet)
-        print('detections: ', detections)
-        # self.model.drawDetections(frameRet, detections)
+        # print('detections: ', detections)
+        self.model.drawDetections(frameRet, detections)
 
         class_wanted = 0 if args.cat == 'any' else self.model.LABELS.index(args.cat)
         detection = next(filter(lambda d: d['classID'] == class_wanted, detections), None)
