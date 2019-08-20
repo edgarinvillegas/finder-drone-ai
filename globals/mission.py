@@ -1,0 +1,1 @@
+operations_queue = None  # It will get its value in mission_utils

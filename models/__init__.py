@@ -4,3 +4,9 @@ from .BaseDetectionModel import BaseDetectionModel
 from .YoloDetectionModel import YoloDetectionModel
 from .SsdDetectionModel import SsdDetectionModel
 from .FaceDetectionModel import FaceDetectionModel
+from .FasterRcnnDetectionModel import FasterRcnnDetectionModel
+from .FasterRcnnFlipDetectionModel import FasterRcnnFlipDetectionModel
+from .CatDetectionModel import CatDetectionModel
+from .CustomClassifier import CustomClassifier
+from .MyCatsDetectionModel import MyCatsDetectionModel
+from .SlidingWindowDetectionModel import SlidingWindowDetectionModel

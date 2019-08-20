@@ -1,31 +1,31 @@
-# video-detection-base
+# finder-drone-ai
 
-Small base framework for detection in videos
-It supports:
-- Input: Video file/webcam/Camera (rtsp, rtmp feeds)
-- Models: Yolo objects/SSD objects/Caffe Face (caffe)
-- Output: Video file/Live window
+My project to find anything with a drone!
+Usecase is with cats, drone will find a cat based on videos of it.
 
-(Easily extendable in any layer)
+PLEASE check this video:
+https://youtu.be/n-Ym6CQXLv4
+
+(HD version still being uploaded)
+
+Features:
+- Customized object detector (based on FasterRCNN)
+- Drone autonomous flying, with visual breaks to fix erratic movements (detects wooden breaks, with Open CV)
+- Custom image classifier
+- Federated learning using Raspberry PIs, with an original approach
+- Real world working demos   
+
 
 ## Running the code
 
-1) If you want to use yolo (very likely), please download the model from here:
-https://drive.google.com/open?id=1nLw9T2f2qoWeLsJ6Rwz4GklBaA1Bvdda
-(alternate link: https://s3-us-west-2.amazonaws.com/static.pyimagesearch.com/opencv-yolo/yolo-object-detection.zip?__s=pyri6sq6kf2bmdenxa8k)
-Extract and copy the entire yolo-coco folder to this project's "/models" folder, so that you have /models/yolo-coco/yolov3.weights
+- Connect to Tello wifi
+- Execute:
 
-2) Play with the input-model-output combination on main.py (around lines 18-28)
+python main.py --save_session --cat any --mission fffflbbbblfffflbbbbl
+python main.py --save_session --cat <name_of_the_cat>
 
-3) Run the code
-```
-    python main.py
-```  
+For further instructions, notebooks, etc and explanation please check the video:
+https://youtu.be/n-Ym6CQXLv4
 
-4) Repeat from step #2 :) 
-
-### Package requirements
-- opencv
-- imutils
-
-**@author edgarinvillegas@hotmail.com**
+PLEASE WATCH IT!
+(HD version still being uploaded)
