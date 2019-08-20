@@ -4,6 +4,8 @@ My project to find anything with a drone!
 Usecase is with cats, drone will find a cat based on videos of it.
 
 PLEASE check this video:
+https://youtu.be/n-Ym6CQXLv4
+
 (HD version still being uploaded)
 
 Features:
@@ -23,5 +25,7 @@ python main.py --save_session --cat any --mission fffflbbbblfffflbbbbl
 python main.py --save_session --cat <name_of_the_cat>
 
 For further instructions, notebooks, etc and explanation please check the video:
+https://youtu.be/n-Ym6CQXLv4
 
+PLEASE WATCH IT!
 (HD version still being uploaded)
