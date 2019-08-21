@@ -7,8 +7,7 @@ NEW: PLEASE check the summarized presentation video:
 https://www.youtube.com/watch?v=GN3oGCZcUi4
 
 Extended version with more details:
-https://youtu.be/n-Ym6CQXLv4
-HD version still being uploaded
+https://youtu.be/N04wvCm5Y_g
 
 Features:
 - Customized object detector (based on FasterRCNN)
